@@ -60,8 +60,7 @@ def get_depth_hist() :
     outdir = os.path.abspath(os.path.join(os.getcwd(), args.OUT))
 
     # Get other arguments
-    dc_args = {"threads":args.threads[0],
-               }
+    dc_args = {"threads":args.threads[0], }
 
     print("# Hap.py depth")
     print("Input alignment file:\t{}\n".format(BAM))
@@ -75,11 +74,11 @@ def get_depth_hist() :
         os.makedirs(outdir) # Create directory following path
 
     # Read coverage histogram
-    output = os.path.join(outdir, os.path.basename(BAM) + ".cov")
+    coverage_output = os.path.join(outdir, os.path.basename(BAM) + ".cov")
     if not os.path.isfile(output) : # In case no coverage file found
         log("Starting sambamba depth...")
-        output = check_files([output])[0]
-        dc_sambamba = {"BAM":BAM,"threads": dc_args["threads"], "out":output)}
+        coverage_output = check_files([coverage_output])[0]
+        dc_sambamba = {"BAM":BAM,"threads": dc_args["threads"], "out":coverage_output)}
         cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
         cmd = cmd.format(**dc_sambamba)
         run(cmd)
@@ -92,6 +91,25 @@ def get_depth_hist() :
         log("Reading coverage file...")
         output = check_files([output])[0]
 
+        # Read coverage
+        df = pd.read_csv(coverage_output, sep="\t", usecols=["REF","POS","COV"])
+        total_bases = len(df) # ~length of reference assembly
+        # Number of bins = number of coverage values between 0 and max found
+        hist, bin_edges = np.hist(df["COV"], bins=range(0, max(df["COV"])))
+
+        total_summarized = 0
+        max_coverage_to_keep = 0
+        for freq, cov in zip(hist, bin_edges) :
+            total_summarized += freq
+            if total_summarized/total_bases > 0.99 :
+                max_coverage_to_keep = cov # Find max coverage to keep
+                break
+
+        # Output histogram
+        f = open(output, 'w')
+        for freq, cov in zip(hist, bin_edges) :
+            f.write("{}\t{}\n".format(cov, freq))
+        f.close()
 
     else :
         log("SKIP: Existing output histogram file found!")
@@ -292,6 +310,11 @@ def estimate_haploidy(args) :
     sys.exit(0)
 
 
+
+
+
+
+
 #    _____    _           _
 #   |  __ \  | |         | |
 #   | |__) | | |   ___   | |_
@@ -304,6 +327,11 @@ def estimate_haploidy(args) :
 def do_plot() :
     pass
 
+
+
+
+
+
 #    _____                                  _
 #   |  __ \                                | |
 #   | |__) |   ___   _ __     ___    _ __  | |_
@@ -315,6 +343,11 @@ def do_plot() :
 
 def build_report() :
     pass
+
+
+
+
+
 
 
 #     ____    _______   _    _   ______   _____     _____
@@ -418,7 +451,7 @@ def main() :
     depth.add_argument('-t','--threads',nargs=1,type=int,default=[4], required=False,help="<INT> Number of threads for sambamba. Default: %(default)s.")
     depth.set_defaults(func=get_depth_hist)
 
-    # Compare He in and out regions of bedfile
+    # Estimate Haploidy and Total Size Score
     estimate = subparsers.add_parser('estimate', help="Computes haploidy score based on the coverage distribution.")
     estimate.add_argument('HIST',nargs=1,type=str,help="<STRING> A path to the histogram output of the `Hap.py depth` command (.hist file).")
     estimate.add_argument('OUT',nargs=1,type=str,help="<STRING> A path for the output directory.")
