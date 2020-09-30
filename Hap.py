@@ -22,6 +22,7 @@ import subprocess
 #from multiprocessing import Pool, TimeoutError
 
 # Signal analysis
+import math
 import pandas as pd
 import numpy as np
 from scipy.signal import savgol_filter # Smoothing
@@ -52,12 +53,12 @@ import matplotlib.pyplot as plt
 #                   | |
 #                   |_|
 
-def get_depth_hist() :
+def get_depth_hist(args) :
     """Finds peaks and modality, then computes scores of haploidy"""
     # Get histogram file
     BAM = check_files(args.BAM)[0]
     # Output directory
-    outdir = os.path.abspath(os.path.join(os.getcwd(), args.OUT))
+    outdir = os.path.abspath(os.path.join(os.getcwd(), args.OUT[0]))
 
     # Get other arguments
     dc_args = {"threads":args.threads[0], }
@@ -65,7 +66,7 @@ def get_depth_hist() :
     print("# Hap.py depth")
     print("Input alignment file:\t{}\n".format(BAM))
     print("Output directory:\t{}\n".format(outdir))
-    #print("Other arguments: " + str(dc_args))
+    print("Other arguments: " + str(dc_args))
     print("===============================================================================\n")
 
     if os.path.isdir(outdir) :
@@ -75,10 +76,10 @@ def get_depth_hist() :
 
     # Read coverage histogram
     coverage_output = os.path.join(outdir, os.path.basename(BAM) + ".cov")
-    if not os.path.isfile(output) : # In case no coverage file found
+    if not os.path.isfile(coverage_output) : # In case no coverage file found
         log("Starting sambamba depth...")
-        coverage_output = check_files([coverage_output])[0]
-        dc_sambamba = {"BAM":BAM,"threads": dc_args["threads"], "out":coverage_output)}
+        coverage_output = os.path.abspath(coverage_output)
+        dc_sambamba = {"BAM":BAM,"threads": dc_args["threads"], "out":coverage_output}
         cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
         cmd = cmd.format(**dc_sambamba)
         run(cmd)
@@ -89,13 +90,13 @@ def get_depth_hist() :
     output = os.path.join(outdir, os.path.basename(BAM) + ".hist")
     if not os.path.isfile(output) : # In case no coverage file found
         log("Reading coverage file...")
-        output = check_files([output])[0]
+        output = os.path.abspath(output)
 
         # Read coverage
         df = pd.read_csv(coverage_output, sep="\t", usecols=["REF","POS","COV"])
         total_bases = len(df) # ~length of reference assembly
         # Number of bins = number of coverage values between 0 and max found
-        hist, bin_edges = np.hist(df["COV"], bins=range(0, max(df["COV"])))
+        hist, bin_edges = np.histogram(df["COV"], bins=range(0, max(df["COV"])))
 
         total_summarized = 0
         max_coverage_to_keep = 0
@@ -108,7 +109,10 @@ def get_depth_hist() :
         # Output histogram
         f = open(output, 'w')
         for freq, cov in zip(hist, bin_edges) :
-            f.write("{}\t{}\n".format(cov, freq))
+            if cov == max_coverage_to_keep :
+                break
+            else :
+                f.write("{}\t{}\n".format(cov, freq))
         f.close()
 
     else :
@@ -145,13 +149,13 @@ def estimate_haploidy(args) :
     # Get histogram file
     HIST = check_files(args.HIST)[0]
     # Get size estimation
-    is_valid, SIZE = size_from_string(args.SIZE)
+    is_valid, SIZE = size_from_string(args.SIZE[0])
     if not is_valid :
         log("Error in the size estimation provided...")
         sys.exit(1)
 
     # Output directory
-    outdir = os.path.abspath(os.path.join(os.getcwd(), args.OUT))
+    outdir = os.path.abspath(os.path.join(os.getcwd(), args.OUT[0]))
 
     # Get other arguments
     dc_args = {"max_contam":args.max_contaminant[0],
@@ -210,10 +214,10 @@ def estimate_haploidy(args) :
             # HAPLO + DIPLO
         haplotigs_peak_ratio = round(heights[-2] / heights[-1], 3)
 
-        if peaks[0] < max_contam : # In case found contaminant <-- 2 peaks == contams and higher or lower
+        if peaks[0] < dc_args["max_contam"] : # In case found contaminant <-- 2 peaks == contams and higher or lower
             limits["Contaminants"] = math.ceil(peaks[0] + widths[0])
 
-            if peaks[1] < max_diploid : # CONTA + DIPLO
+            if peaks[1] < dc_args["max_diploid"] : # CONTA + DIPLO
                 limits["Diploid"] = math.ceil(peaks[1] - widths[1]) # diploid region is between contams and lower border of haploid peak
             else : # CONTA + HAPLO
                 limits["Diploid"] = math.ceil(peaks[1] + widths[1]) # diploid region is between contams and upper border of diploid peak
@@ -226,10 +230,10 @@ def estimate_haploidy(args) :
         log("Found 1 peak at: {}x".format(peaks[0]))
         haplotigs_peak_ratio = 0.0
 
-        if peaks[0] < max_contam : # CONTAMINANT ASM
+        if peaks[0] < dc_args["max_contam"] : # CONTAMINANT ASM
             limits["Contaminants"] = math.ceil(peaks[0] + widths[0])
             limits["Diploid"] = math.ceil(peaks[0] + widths[0])
-        elif peaks[0] < max_diploid : # DIPLOID ASM
+        elif peaks[0] < dc_args["max_diploid"] : # DIPLOID ASM
             limits["Contaminants"] = math.ceil(peaks[0] - widths[0])
             limits["Diploid"] = math.ceil(peaks[0] + widths[0])
         else : # HAPLOID ASM
@@ -246,10 +250,10 @@ def estimate_haploidy(args) :
     AUC_haplo = sum(smoothed[limits["Diploid"]:])
 
     log("Scoring assembly...")
-    AUC_ratio = round(1 - (AUC_diplo / AUC_haplo), 3)
+    AUC_ratio = 1 - (AUC_diplo / AUC_haplo)
     print("AUC(Haploid) (= H) = {}".format(AUC_haplo))
     print("AUC(Diploid) (= D) = {}".format(AUC_diplo))
-    print("AUC ratio (1- D/H) = {}".format(AUC_ratio))
+    print("AUC ratio (1 - D/H) = {}".format(round(AUC_ratio, 3)))
 
     print("AUC(Haploid) + AUC(Diploid) / 2 = {}".format(AUC_haplo + AUC_diplo/2))
     TSS = 1 - abs(SIZE - (AUC_haplo + AUC_diplo/2)) / SIZE
@@ -262,8 +266,9 @@ def estimate_haploidy(args) :
     f = open(out_file, "w")
     f.write("AUC(Haploid) = {}\n".format(AUC_haplo))
     f.write("AUC(Diploid) = {}\n".format(AUC_diplo))
+    f.write("AUC ratio (1 - D/H) = {}\n".format(AUC_ratio))
     f.write("AUC(Haploid) + AUC(Diploid)/2 = {}\n".format(AUC_haplo + AUC_diplo/2))
-    f.write("Total Size Score = {}".format( round(TSS, 3) ))
+    f.write("Total Size Score = {}\n".format(TSS))
     f.close()
 
     if dc_args["plot"] :
@@ -295,7 +300,7 @@ def estimate_haploidy(args) :
         # AUC
         ax[1].bar(np.arange(3), [AUC_conta, AUC_diplo, AUC_haplo], color=["darkgray", "violet", "red"], edgecolor="k", zorder=10)
         ax[1].set_xticks(np.arange(3))
-        ax[1].set_xticklabels(["Contaminants", "Diploid", "Haploid"], rotation="vertical", fontsize=13)
+        ax[1].set_xticklabels(["Contam", "Diploid", "Haploid"], rotation="vertical", fontsize=13)
         ax[1].set_ylabel("Area Under Curve", fontsize=15)
         for axi in ax :
             axi.yaxis.set_tick_params(labelsize=12)
@@ -439,6 +444,11 @@ def run(cmd) :
 #
 
 def main() :
+    """Pipeline check"""
+    if not which("sambamba") :
+        log("Error: Sambamba is not found!")
+        sys.exit(1)
+
     """Argument parser"""
     parser = argparse.ArgumentParser(description='Estimate assembly haploidy based on base depth of coverage histogram.')
     subparsers = parser.add_subparsers(required=True, dest="depth")
@@ -455,11 +465,11 @@ def main() :
     estimate = subparsers.add_parser('estimate', help="Computes haploidy score based on the coverage distribution.")
     estimate.add_argument('HIST',nargs=1,type=str,help="<STRING> A path to the histogram output of the `Hap.py depth` command (.hist file).")
     estimate.add_argument('OUT',nargs=1,type=str,help="<STRING> A path for the output directory.")
-    estimate.add_argument('SIZE',nargs=1,type=int,help="<STRING> An expected assembly size (in bp) to compute the Total Size Score. Valid multipliers are (K, M, G) e.g.: 10K = 10000.")
+    estimate.add_argument('SIZE',nargs=1,type=str,help="<STRING> An expected assembly size (in bp) to compute the Total Size Score. Valid multipliers are (K, M, G) e.g.: 10K = 10000.")
     estimate.add_argument('-mc', '--max-contaminant', nargs=1, type=int, default=[35], required=False, help="<INT> Maximum coverage of contaminants. Default: %(default)s")
     estimate.add_argument('-md', '--max-diploid', nargs=1, type=int, default=[120], required=False, help="<INT> Maximum coverage of the diploid peak. Default: %(default)s")
     estimate.add_argument('-mp', '--min-peak', nargs=1, type=int, default=[150000], required=False, help="<INT> Minimum peak height. Default: %(default)s")
-    estimate.add_argument('-p', '--plot',type=str_to_bool, nargs='?', const=False, default=False, help="Output plots. Default: %(default)s")
+    estimate.add_argument('-p', '--plot', type=str_to_bool, metavar="", nargs='?', const=True, default=False, help="Output plots. Default: %(default)s")
     #estimate.add_argument('FASTA',nargs=1,type=str,help="<STRING> A path to the assembly sequence (.fasta file).")
     #estimate.add_argument('-s', '--sample',nargs=1,type=str,default=['unknown'],help="<STRING> Sample name (only for output file names). Default: %(default)s")
     #estimate.add_argument('-o', '--output',nargs=1,type=str,default=['compare_plots'],help="<STRING> Directory name to output. Default: path/to/cur_dir/%(default)s")
