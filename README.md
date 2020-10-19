@@ -57,5 +57,5 @@ optional arguments:
   -mc MAX_CONTAMINANT, --max-contaminant MAX_CONTAMINANT <INT> Maximum coverage of contaminants. Default: [35] 
   -md MAX_DIPLOID, --max-diploid MAX_DIPLOID <INT> Maximum coverage of the diploid peak. Default: [120]
   -mp MIN_PEAK, --min-peak MIN_PEAK <INT> Minimum peak height. Default: [150000]
-  -p [], --plot []      Output plots. Default: False
+  -p, --plot      Output plots. Default: False
 ```
