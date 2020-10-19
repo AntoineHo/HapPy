@@ -82,7 +82,10 @@ def get_depth_hist(args) :
         dc_sambamba = {"BAM":BAM,"threads": dc_args["threads"], "out":coverage_output}
         cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
         cmd = cmd.format(**dc_sambamba)
-        run(cmd)
+        sambamba_returncode = run(cmd)
+        if sambamba_returncode == 1 :
+                log("ERROR: sambamba command returned: {}, a common problem is a missing index (.bai) file...".format(sambamba_returncode))
+                sys.exit(1)
     else :
         log("SKIP: Existing output coverage file found using it instead of running sambamba!")
 
@@ -164,6 +167,8 @@ def estimate_haploidy(args) :
                "plot":args.plot,
                }
 
+    _debug = args.debug
+
     print("# Hap.py estimate")
     print("Coverage histogram:\t{}\n".format(HIST))
     print("Output directory:\t{}\n".format(outdir))
@@ -186,12 +191,65 @@ def estimate_haploidy(args) :
     heights = props["peak_heights"]
     widths = peak_widths(smoothed, peaks)[0] # Get peak widths
 
+    if _debug :
+        print("freqs:", freqs)
+        print("Smoothed:", smoothed)
+        print("Peaks:", peaks)
+        print("Heights:", heights)
+        print("Widths:", widths)
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        # Main distribution
+        ax.plot(smoothed, color="k", lw=1.3, zorder=5)
+        ax.fill_between(np.arange(len(smoothed)), smoothed, np.zeros(len(smoothed)), color="red",
+                        lw=0, alpha=0.35, zorder=5, label="Smoothed distribution")
+        # Vertical lines
+        ax.vlines(peaks, min(smoothed), 1.06*max(smoothed), label="Peaks found", linewidth=1.0, zorder=7)
+        # Peaks found
+        ax.scatter(peaks, heights, marker="x", s=100, color="b", label="Local maximum", zorder=9)
+        # Formatting plot
+        ax.set_xlim(-4,len(smoothed)+4)
+        ax.set_ylim(0, 1.05*max(smoothed))
+        ax.set_xlabel("Coverage", fontsize=15)
+        ax.set_ylabel("Frequency", fontsize=15)
+        ax.legend()
+        ax.locator_params(nbins=40)
+        #
+        fig.savefig(os.path.join(outdir, "debugplot.png"))
+        plt.close(fig)
+
+
     params, cov = None, None
     peak_ratios = None
     limits = {}
 
-    # In case 3 peaks!
-    if len(peaks) == 3 :
+    #
+    if len(peaks) > 3 : # In case 3+ peaks:
+        log("Found more than 3 peaks at: {}x and {}x".format("x, ".join(str(peak) for peak in peaks[:-1]), peaks[-1]))
+
+        # In case number of peaks lower than max contam is > 1
+        if len([peak for peak in peaks if peak < dc_args["max_contam"]]) > 1 :
+            # INCREASE THRESHOLD to detect peaks
+            log("WARNING: More than 1 contaminant peak is found")
+            print("HELP: Try running with --debug flag and check the histogram curve.")
+            print("HELP: If you estimate that there should be no contaminant peaks detected then increase the min_peak (-mp) threshold (currently {}).".format(dc_args["min_peak"]))
+            print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contam"]))
+            log("Exiting...")
+            sys.exit(1)
+        elif len([peak for peak in peaks if (peak >= dc_args["max_contam"] and peak < dc_args["max_diploid"])]) > 1 : # If number of diploid peaks is > 1
+            log("WARNING: More than 1 diploid peak is found")
+            print("HELP: Try running with --debug flag and check the histogram curve.")
+            print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(dc_args["max_contam"], dc_args["max_diploid"]))
+            #print("NOTE: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contaminant"]))
+            log("Exiting...")
+            sys.exit(1)
+        else :
+            log("WARNING: More than 1 diploid peak is found")
+            print("HELP: Try running with --debug flag and check the histogram curve.")
+            log("Exiting...")
+            sys.exit(1)
+
+    elif len(peaks) == 3 : # In case 3 peaks:
         log("Found 3 peaks at: {}x, {}x and {}x".format(peaks[0], peaks[1], peaks[2]))
         haplotigs_peak_ratio = round(heights[-2] / heights[-1], 3)
 
@@ -281,17 +339,17 @@ def estimate_haploidy(args) :
         ax[0].fill_between(np.arange(len(smoothed)), smoothed, np.zeros(len(smoothed)), color="red",
                         lw=0, alpha=0.35, zorder=5, label="Smoothed distribution")
         # Vertical lines
-        ax[0].vlines(peaks, min(smoothed), 1.06*max(smoothed), label="Peaks found", linewidth=1.0, zorder=7)
+        ax[0].vlines(peaks, 0, 1.06*max(smoothed), label="Peaks found", linewidth=1.0, zorder=7)
         for k, v in limits.items() :
             col = "r" if k == "Contaminants" else "g"
-            ax[0].vlines([v], min(smoothed), 1.06*max(smoothed), label="Limit for "+k, linewidth=1.0, color=col, zorder=7)
+            ax[0].vlines([v], 0, 1.06*max(smoothed), label="Limit for "+k, linewidth=1.0, color=col, zorder=7)
         # Peaks found
         ax[0].scatter(peaks, heights, marker="x", s=100, color="b", label="Local maximum", zorder=9)
 
         # Formatting plot
         ax[0].set_xlim(-4,len(smoothed)+4)
         ax[0].set_ylim(0, 1.05*max(smoothed))
-        ax[0].set_title("\nHaplotig ratio = {}\nAUC ratio = {}\nTSS = {}".format(haplotigs_peak_ratio, AUC_ratio, round(TSS, 3)), fontsize=16)
+        ax[0].set_title("\nHaplotig ratio = {}\nAUC ratio = {}\nTSS = {}".format(haplotigs_peak_ratio, round(AUC_ratio, 3), round(TSS, 3)), fontsize=16)
         ax[0].set_xlabel("Coverage", fontsize=15)
         ax[0].set_ylabel("Frequency", fontsize=15)
         ax[0].legend()
@@ -302,6 +360,7 @@ def estimate_haploidy(args) :
         ax[1].set_xticks(np.arange(3))
         ax[1].set_xticklabels(["Contam", "Diploid", "Haploid"], rotation="vertical", fontsize=13)
         ax[1].set_ylabel("Area Under Curve", fontsize=15)
+        ax[1].yaxis.tick_right()
         for axi in ax :
             axi.yaxis.set_tick_params(labelsize=12)
             axi.xaxis.set_tick_params(labelsize=12)
@@ -420,19 +479,10 @@ def which(program):
 def list_str(v) :
     return v.split(',')
 
-def str_to_bool(v) :
-	if isinstance(v, bool):
-		return v
-	if v.lower() in ('yes', 'true', 't', 'y', '1'):
-		return True
-	elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-		return False
-	else:
-		raise argparse.ArgumentTypeError('Boolean value expected.')
-
 def run(cmd) :
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     proc.communicate()
+    return proc.returncode
 
 #               _____     _____   _    _   __  __   ______   _   _   _______    _____
 #       /\     |  __ \   / ____| | |  | | |  \/  | |  ____| | \ | | |__   __|  / ____|
@@ -473,7 +523,8 @@ def main() :
     estimate.add_argument('-mp',    '--min-peak',       nargs=1, type=int, default=[150000],required=False, help="<INT> Minimum peak height. Default: %(default)s")
     # Flags
     estimate.add_argument('-p',     '--plot',   dest='plot',    action='store_true',    help="Output plots. Default: %(default)s")
-    estimate.set_defaults(func=estimate_haploidy)
+    estimate.add_argument('-d',     '--debug',  dest='debug',   action='store_true',    help=argparse.SUPPRESS)
+    estimate.set_defaults(func=estimate_haploidy, debug=False)
     #estimate.add_argument('FASTA',nargs=1,type=str,help="<STRING> A path to the assembly sequence (.fasta file).")
     #estimate.add_argument('-s', '--sample',nargs=1,type=str,default=['unknown'],help="<STRING> Sample name (only for output file names). Default: %(default)s")
     #estimate.add_argument('-o', '--output',nargs=1,type=str,default=['compare_plots'],help="<STRING> Directory name to output. Default: path/to/cur_dir/%(default)s")
