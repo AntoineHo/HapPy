@@ -457,19 +457,23 @@ def main() :
     depth = subparsers.add_parser('depth', help="Obtain a depth of coverage histogram for the assembly using sambamba depth base.")
     depth.add_argument('BAM',nargs=1,type=str,help="<STRING> A path to the reads alignment on the assembly (.bam file).")
     depth.add_argument('OUT',nargs=1,type=str,help="<STRING> An output path for the coverage files (.cov and .hist files).")
-    #depth.add_argument('REF',nargs=1,type=str,help="<STRING> A path to the assembly sequence (.fasta file).")
     depth.add_argument('-t','--threads',nargs=1,type=int,default=[4], required=False,help="<INT> Number of threads for sambamba. Default: %(default)s.")
     depth.set_defaults(func=get_depth_hist)
+    #depth.add_argument('REF',nargs=1,type=str,help="<STRING> A path to the assembly sequence (.fasta file).")
 
     # Estimate Haploidy and Total Size Score
     estimate = subparsers.add_parser('estimate', help="Computes haploidy score based on the coverage distribution.")
-    estimate.add_argument('HIST',nargs=1,type=str,help="<STRING> A path to the histogram output of the `Hap.py depth` command (.hist file).")
-    estimate.add_argument('OUT',nargs=1,type=str,help="<STRING> A path for the output directory.")
-    estimate.add_argument('SIZE',nargs=1,type=str,help="<STRING> An expected assembly size (in bp) to compute the Total Size Score. Valid multipliers are (K, M, G) e.g.: 10K = 10000.")
-    estimate.add_argument('-mc', '--max-contaminant', nargs=1, type=int, default=[35], required=False, help="<INT> Maximum coverage of contaminants. Default: %(default)s")
-    estimate.add_argument('-md', '--max-diploid', nargs=1, type=int, default=[120], required=False, help="<INT> Maximum coverage of the diploid peak. Default: %(default)s")
-    estimate.add_argument('-mp', '--min-peak', nargs=1, type=int, default=[150000], required=False, help="<INT> Minimum peak height. Default: %(default)s")
-    estimate.add_argument('-p', '--plot', type=str_to_bool, metavar="", nargs='?', const=True, default=False, help="Output plots. Default: %(default)s")
+    # Positionals
+    estimate.add_argument('HIST',   nargs=1,type=str,help="<STRING> A path to the histogram output of the `Hap.py depth` command (.hist file).")
+    estimate.add_argument('OUT',    nargs=1,type=str,help="<STRING> A path for the output directory.")
+    estimate.add_argument('SIZE',   nargs=1,type=str,help="<STRING> An expected assembly size (in bp) to compute the Total Size Score. Valid multipliers are (K, M, G) e.g.: 10K = 10000.")
+    # Optionals
+    estimate.add_argument('-mc',    '--max-contaminant',nargs=1, type=int, default=[35],    required=False, help="<INT> Maximum coverage of contaminants. Default: %(default)s")
+    estimate.add_argument('-md',    '--max-diploid',    nargs=1, type=int, default=[120],   required=False, help="<INT> Maximum coverage of the diploid peak. Default: %(default)s")
+    estimate.add_argument('-mp',    '--min-peak',       nargs=1, type=int, default=[150000],required=False, help="<INT> Minimum peak height. Default: %(default)s")
+    # Flags
+    estimate.add_argument('-p',     '--plot',   dest='plot',    action='store_true',    help="Output plots. Default: %(default)s")
+    estimate.set_defaults(func=estimate_haploidy)
     #estimate.add_argument('FASTA',nargs=1,type=str,help="<STRING> A path to the assembly sequence (.fasta file).")
     #estimate.add_argument('-s', '--sample',nargs=1,type=str,default=['unknown'],help="<STRING> Sample name (only for output file names). Default: %(default)s")
     #estimate.add_argument('-o', '--output',nargs=1,type=str,default=['compare_plots'],help="<STRING> Directory name to output. Default: path/to/cur_dir/%(default)s")
@@ -484,7 +488,6 @@ def main() :
     #estimate.add_argument('-MH','--max-het',nargs=1,type=int,default=[10], required=False, help="<INT> Maximum heterozygosity range of a region to plot the histogram (in range [mh, MH]). Default: %(default)s")
     #estimate.add_argument('-mh','--min-het',nargs=1,type=int,default=[0], required=False, help="<INT> Minimum heterozygosity range of a region to plot the histogram (in range [mh, MH]). Default: %(default)s")
     #estimate.add_argument('-bhn','--bin-het-number',nargs=1,type=int,default=[100], required=False, help="<INT> Number of bins in histogram in range [mh, MH]. Default: %(default)s")
-    estimate.set_defaults(func=estimate_haploidy)
 
     # Plot shuffled vs observed distributions based on shuffle command results
     #plot = subparsers.add_parser('plot', help="Plot peaks and AUC.")
