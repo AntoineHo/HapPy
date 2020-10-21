@@ -223,38 +223,15 @@ def estimate_haploidy(args) :
     peak_ratios = None
     limits = {}
 
-    #
     if len(peaks) > 3 : # In case 3+ peaks:
-        log("Found more than 3 peaks at: {}x and {}x".format("x, ".join(str(peak) for peak in peaks[:-1]), peaks[-1]))
+        peaks, heights, widths = check_peaks(peaks, props, widths, len(smoothed), dc_args)
 
-        # In case number of peaks lower than max contam is > 1
-        if len([peak for peak in peaks if peak < dc_args["max_contam"]]) > 1 :
-            # INCREASE THRESHOLD to detect peaks
-            log("WARNING: More than 1 contaminant peak is found")
-            print("HELP: Try running with --debug flag and check the histogram curve.")
-            print("HELP: If you estimate that there should be no contaminant peaks detected then increase the min_peak (-mp) threshold (currently {}).".format(dc_args["min_peak"]))
-            print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contam"]))
-            log("Exiting...")
-            sys.exit(1)
-        elif len([peak for peak in peaks if (peak >= dc_args["max_contam"] and peak < dc_args["max_diploid"])]) > 1 : # If number of diploid peaks is > 1
-            log("WARNING: More than 1 diploid peak is found")
-            print("HELP: Try running with --debug flag and check the histogram curve.")
-            print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(dc_args["max_contam"], dc_args["max_diploid"]))
-            #print("NOTE: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contaminant"]))
-            log("Exiting...")
-            sys.exit(1)
-        else :
-            log("WARNING: More than 1 diploid peak is found")
-            print("HELP: Try running with --debug flag and check the histogram curve.")
-            log("Exiting...")
-            sys.exit(1)
-
-    elif len(peaks) == 3 : # In case 3 peaks:
+    if len(peaks) == 3 : # In case 3 peaks : 1 in each category
         log("Found 3 peaks at: {}x, {}x and {}x".format(peaks[0], peaks[1], peaks[2]))
         haplotigs_peak_ratio = round(heights[-2] / heights[-1], 3)
 
-        # For each peak height and with
-        for n, height, width in zip(range(3), peaks, widths) :
+        # For each peak pos and width
+        for n, pos, width in zip(range(3), peaks, widths) :
             if n == 0 :
                 categ = "Contaminants"
             elif n == 1 :
@@ -262,7 +239,7 @@ def estimate_haploidy(args) :
             elif n == 2 :
                 break
             # Store limit under the key category of the peak
-            limits[categ] = math.ceil(height + width)
+            limits[categ] = math.ceil(pos + width)
 
     elif len(peaks) == 2 : # If only 2 peaks
         log("Found 2 peaks at: {}x and {}x".format(peaks[0], peaks[1]))
@@ -373,6 +350,79 @@ def estimate_haploidy(args) :
     log("Finished!")
     sys.exit(0)
 
+
+def check_peaks(peaks, props, widths, maximum_cov, dc_args) :
+    """In case there are more than 3 peaks, find only the 3 highest interest peaks"""
+    log("Warning: detected more than 3 peaks at: {}x and {}x".format("x, ".join(str(peak) for peak in peaks[:-1]), peaks[-1]))
+
+    contaminant_peak, diploid_peak, haploid_peak = None, None, None
+    contaminant_height, diploid_height, haploid_height = None, None, None
+    contaminant_width, diploid_width, haploid_width = None, None, None
+
+    # Find highest peaks
+    for pos, height in zip(peaks, props["peak_heights"]) :
+        if pos < dc_args["max_contam"] :
+            if contaminant_peak == None :
+                contaminant_peak = pos
+                contaminant_height = height
+            elif height > contaminant_height :
+                contaminant_peak = pos
+                contaminant_height = height
+            else :
+                continue
+        elif pos >= dc_args["max_contam"] and pos < dc_args["max_diploid"] :
+            if diploid_peak == None :
+                diploid_peak = pos
+                diploid_height = height
+            elif height > diploid_height :
+                diploid_peak = pos
+                diploid_height = height
+            else :
+                continue
+        else :
+            if haploid_peak == None :
+                haploid_peak = pos
+                haploid_height = height
+            elif height > haploid_height :
+                haploid_peak = pos
+                haploid_height = height
+            else :
+                continue
+
+    # widths = general boundaries <-- may be a problem sometimes
+    contaminant_width = math.floor(abs(dc_args["max_contam"]-contaminant_peak)) # floor of absolute distance between contaminant boundary and highest contaminant peak
+    diploid_width = math.floor(abs(dc_args["max_diploid"]-diploid_peak)) # floor of absolute distance between diploid boundary and highest diploid peak
+    haploid_width = math.floor(abs(maximum_cov-diploid_peak)) # floor of absolute distance between haploid peak and max coverage ( == len(x) == number of bins ) from the histogram
+
+    """
+    # In case number of peaks lower than max contam is > 1
+    if len([peak for peak in peaks if peak < dc_args["max_contam"]]) > 1 :
+        # INCREASE THRESHOLD to detect peaks
+        log("WARNING: More than 1 contaminant peak is found. Trying to use only largest found")
+
+        print("HELP: Try running with --debug flag and check the histogram curve.")
+        print("HELP: If you estimate that there should be no contaminant peaks detected then increase the min_peak (-mp) threshold (currently {}).".format(dc_args["min_peak"]))
+        print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contam"]))
+        log("Exiting...")
+        sys.exit(1)
+    elif len([peak for peak in peaks if (peak >= dc_args["max_contam"] and peak < dc_args["max_diploid"])]) > 1 : # If number of diploid peaks is > 1
+        log("WARNING: More than 1 diploid peak is found")
+        print("HELP: Try running with --debug flag and check the histogram curve.")
+        print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(dc_args["max_contam"], dc_args["max_diploid"]))
+        #print("NOTE: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contaminant"]))
+        log("Exiting...")
+        sys.exit(1)
+    else :
+        log("WARNING: More than 1 diploid peak is found")
+        print("HELP: Try running with --debug flag and check the histogram curve.")
+        log("Exiting...")
+        sys.exit(1)
+    """
+
+    newpeaks = [contaminant_peak, diploid_peak, haploid_peak]
+    newheights = [contaminant_height, diploid_height, haploid_height]
+    newwidths = [contaminant_width, diploid_width, haploid_width]
+    return newpeaks, newheights, newwidths
 
 
 
