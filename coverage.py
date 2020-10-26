@@ -1,19 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os, sys
+import pandas as pd
+import numpy as np
+from utils import *
 
-def get_depth_hist(infile, threads: int, outdir):
+
+def get_cov_hist(infile, threads: int, outdir):
     """Finds peaks and modality, then computes scores of haploidy"""
 
-    # Get histogram file
-    BAM = infile
-    # Get other arguments
-    dc_args = threads
-
     print("# Hap.py depth")
-    print("Input alignment file:\t{}\n".format(BAM))
+    print("Input alignment file:\t{}\n".format(infile))
     print("Output directory:\t{}\n".format(outdir))
-    print("Other arguments: " + str(dc_args))
+    print("Other arguments: " + str(threads))
     print(
         "===============================================================================\n"
     )
@@ -24,15 +24,11 @@ def get_depth_hist(infile, threads: int, outdir):
         os.makedirs(outdir)  # Create directory following path
 
     # Read coverage histogram
-    coverage_output = os.path.join(outdir, os.path.basename(BAM) + ".cov")
+    coverage_output = os.path.join(outdir, os.path.basename(infile) + ".cov")
     if not os.path.isfile(coverage_output):  # In case no coverage file found
         log("Starting sambamba depth...")
         coverage_output = os.path.abspath(coverage_output)
-        dc_sambamba = {
-            "BAM": BAM,
-            "threads": dc_args["threads"],
-            "out": coverage_output,
-        }
+        dc_sambamba = {"BAM": infile, "threads": threads, "out": coverage_output}
         cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
         cmd = cmd.format(**dc_sambamba)
         sambamba_returncode = run(cmd)
@@ -49,7 +45,7 @@ def get_depth_hist(infile, threads: int, outdir):
         )
 
     # Read coverage histogram
-    output = os.path.join(outdir, os.path.basename(BAM) + ".hist")
+    output = os.path.join(outdir, os.path.basename(infile) + ".hist")
     if not os.path.isfile(output):  # In case no coverage file found
         log("Reading coverage file...")
         output = os.path.abspath(output)
