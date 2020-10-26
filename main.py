@@ -6,10 +6,10 @@
 """
 Estimate assembly haploidy based on base depth of coverage histogram.
 
-Usage:
+usage:
     HapPy [-hv] <command> [<args>...]
 
-Options:
+options:
     -h, --help                  shows the help
     -v, --version               shows the version
 
@@ -26,7 +26,6 @@ import commands
 
 def main():
     args = docopt(__doc__, version="0.0.0", options_first=True)
-
     # Retrieve the command to execute.
     command_name = args.pop("<command>").capitalize()
 
@@ -34,9 +33,7 @@ def main():
     command_args = args.pop("<args>")
     if command_args is None:
         command_args = {}
-
     # After 'poping' '<command>' and '<args>', what is left in the args dictionary are the global arguments.
-
     # Retrieve the class from the 'commands' module.
     try:
         command_class = getattr(commands, command_name)

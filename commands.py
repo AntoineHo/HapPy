@@ -6,6 +6,9 @@
 # https://github.com/koszullab/hicstuff
 
 from docopt import docopt
+import sys, os, shutil
+import tempfile
+from os.path import join, dirname
 import coverage as happyc
 import estimate as happye
 
@@ -14,11 +17,7 @@ class AbstractCommand:
     """Base class for the commands"""
 
     def __init__(self, command_args, global_args):
-        """
-        Initialize the commands.
-        :param command_args: arguments of the command
-        :param global_args: arguments of the program
-        """
+        """Initialize the commands."""
         self.args = docopt(self.__doc__, argv=command_args)
         self.global_args = global_args
 
@@ -40,19 +39,21 @@ class Coverage(AbstractCommand):
     Compute coverage histogram for mapping file.
 
     usage:
-        coverage [--threads=1] --hist=DIR <mapping.bam>
+        coverage [--threads=1] --outdir=DIR <mapping.bam>
+        
     arguments:
         mapping.bam              Sorted BAM file after mapping reads to the assembly.
+        
     options:
         -t, --threads=INT        Number of parallel threads allocated for 
                                  sambamba [default: 1].
-        -hi, --hist=DIR          Path where the .cov and .hist files are written.
+        -d, --outdir=DIR           Path where the .cov and .hist files are written.
     """
 
     def execute(self):
         print("Running coverage module.")
         happyc.get_cov_hist(
-            self.args["<mapping.bam>"], self.args["--threads"], self.args["--hist"]
+            self.args["<mapping.bam>"], self.args["--threads"], self.args["--outdir"]
         )
 
 
@@ -61,17 +62,17 @@ class Estimate(AbstractCommand):
     Compute AUC ratio and TSS from coverage histogram.
 
     usage:
-        estimate --max-contaminant=INT --max-diploid=INT --min-peak=INT 
-        --stats=FILE [--plot] <coverage.hist>
+        estimate --max-contaminant=INT --max-diploid=INT --min-peak=INT --outstats=FILE [--plot] <coverage.hist>
+        
     arguments:
         coverage.hist                  Coverage histogram.
+        
     options:
-        -mc, --max-contaminant=INT   Maximum coverage of contaminants.
-        -md, --max-diploid=INT       Maximum coverage of the diploid peak.
-        -mp, --min-peak=INT          Minimum peak height.
-        -s, --stats=FILE             Path where the AUC ratio and TSS values 
-                                     are written.
-        -p, --plot                   Generate histogram plot.
+        -C, --max-contaminant=INT   Maximum coverage of contaminants.
+        -D, --max-diploid=INT       Maximum coverage of the diploid peak.
+        -M, --min-peak=INT          Minimum peak height.
+        -O, --outstats=FILE            Path where the AUC ratio and TSS values are written.
+        -p, --plot                  Generate histogram plot.
     """
 
     def execute(self):
@@ -81,5 +82,5 @@ class Estimate(AbstractCommand):
             self.args["--max-contaminant"],
             self.args["--max-diploid"],
             self.args["--min-peak"],
-            self.args["--stats"],
+            self.args["--outstats"],
         )
