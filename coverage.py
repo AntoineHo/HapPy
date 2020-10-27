@@ -10,10 +10,12 @@ from utils import *
 def get_cov_hist(infile, threads: int, outdir):
     """Finds peaks and modality, then computes scores of haploidy"""
 
-    print("# Hap.py depth")
-    print("Input alignment file:\t{}\n".format(infile))
-    print("Output directory:\t{}\n".format(outdir))
-    print("Other arguments: " + str(threads))
+    print("# Hap.py coverage")
+    print(
+        "Input alignment file:\t{0}\nOutput directory:\t{1}\nNumber of threads:\t{2}".format(
+            infile, outdir, threads
+        )
+    )
     print(
         "===============================================================================\n"
     )
@@ -34,7 +36,7 @@ def get_cov_hist(infile, threads: int, outdir):
         sambamba_returncode = run(cmd)
         if sambamba_returncode == 1:
             log(
-                "ERROR: sambamba command returned: {}, a common problem is a missing index (.bai) file...".format(
+                "ERROR: sambamba command returned: {0}, a common problem is a missing index (.bai) file...".format(
                     sambamba_returncode
                 )
             )

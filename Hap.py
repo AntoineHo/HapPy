@@ -23,9 +23,7 @@ import subprocess
 import math
 import pandas as pd
 import numpy as np
-from scipy.signal import savgol_filter  # Smoothing
-from scipy.signal import find_peaks  # Finding peaks
-from scipy.signal import peak_widths
+
 
 # from scipy.stats import norm
 # from scipy.stats import spearmanr
@@ -84,20 +82,6 @@ def build_report():
 #
 
 
-def size_from_string(string):
-    size_multiplier = {"K": 1000, "M": 1000000, "G": 1000000000}
-    if string[-1].upper() in ["K", "M", "G"]:
-        if string[:-1].isdigit():
-            return True, int(string[:-1]) * size_multiplier[string[-1]]
-        else:  # ERROR
-            return False, None
-    else:  # If no multiplier found
-        if string.isdigit():
-            return True, int(string)
-        else:  # ERROR
-            return False, None
-
-
 def check_dirs(dirs):
     """Returns absolute paths and raise exception if dir does not exist"""
     absdirs = []
@@ -107,17 +91,6 @@ def check_dirs(dirs):
         else:
             absdirs.append(os.path.abspath(d))
     return absdirs
-
-
-def check_files(files):
-    """Returns absolute file paths and raise exception if file does not exist"""
-    absfiles = []
-    for file in files:
-        if not os.path.isfile(file):
-            raise Exception("ERROR: {} is not found!".format(file))
-        else:
-            absfiles.append(os.path.abspath(file))
-    return absfiles
 
 
 def which(program):

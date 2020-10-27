@@ -47,7 +47,7 @@ class Coverage(AbstractCommand):
     options:
         -t, --threads=INT        Number of parallel threads allocated for 
                                  sambamba [default: 1].
-        -d, --outdir=DIR           Path where the .cov and .hist files are written.
+        -d, --outdir=DIR         Path where the .cov and .hist files are written.
     """
 
     def execute(self):
@@ -62,16 +62,17 @@ class Estimate(AbstractCommand):
     Compute AUC ratio and TSS from coverage histogram.
 
     usage:
-        estimate --max-contaminant=INT --max-diploid=INT --min-peak=INT --outstats=FILE [--plot] <coverage.hist>
+        estimate --max-contaminant=INT --max-diploid=INT --min-peak=INT --size=INT --outstats=FILE [--plot] <coverage.hist>
         
     arguments:
-        coverage.hist                  Coverage histogram.
+        coverage.hist               Coverage histogram.
         
     options:
         -C, --max-contaminant=INT   Maximum coverage of contaminants.
         -D, --max-diploid=INT       Maximum coverage of the diploid peak.
         -M, --min-peak=INT          Minimum peak height.
-        -O, --outstats=FILE            Path where the AUC ratio and TSS values are written.
+        -S, --size=INT              Estimated haploid genome size.
+        -O, --outstats=FILE         Path where the AUC ratio and TSS values are written.
         -p, --plot                  Generate histogram plot.
     """
 
@@ -82,5 +83,6 @@ class Estimate(AbstractCommand):
             self.args["--max-contaminant"],
             self.args["--max-diploid"],
             self.args["--min-peak"],
+            self.args["--size"],
             self.args["--outstats"],
         )
