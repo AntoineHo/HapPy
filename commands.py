@@ -62,7 +62,7 @@ class Estimate(AbstractCommand):
     Compute AUC ratio and TSS from coverage histogram.
 
     usage:
-        estimate --max-contaminant=INT --max-diploid=INT --min-peak=INT --size=INT --outstats=FILE [--plot] <coverage.hist>
+        estimate [--max-contaminant=INT] [--max-diploid=INT] [--min-peak=INT] --size=INT --outstats=FILE [--plot] <coverage.hist>
         
     arguments:
         coverage.hist               Coverage histogram.
