@@ -20,8 +20,6 @@ def estimate_haploidy(
     debug=False,
 ):
     """Finds peaks and modality, then computes scores of haploidy"""
-    print(max_cont)
-    print(max_dip)
 
     # Get histogram file and size estimation
     HIST = check_files(infile)
@@ -71,7 +69,7 @@ def estimate_haploidy(
 
     if len(peaks) > 3:  # In case 3+ peaks:
         peaks, heights, widths = check_peaks(
-            peaks, props, widths, len(smoothed), dc_args
+            peaks, heights, widths, len(smoothed), dc_args
         )
 
     if len(peaks) == 0:
@@ -149,9 +147,7 @@ def estimate_haploidy(
     TSS = 1 - abs(SIZE - (AUC_haplo + AUC_diplo / 2)) / SIZE
     print("Total Size Score = {}".format(round(TSS, 3)))
 
-    input_basename = os.path.basename(HIST)
-
-    write_stats(input_basename, AUC_haplo, AUC_diplo, AUC_ratio, TSS)
+    write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio, TSS)
 
     if dc_args["plot"]:
         log("Outputting plots...")
@@ -173,7 +169,7 @@ def estimate_haploidy(
     sys.exit(0)
 
 
-def check_peaks(peaks, props, widths, maximum_cov, dc_args):
+def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
     """In case there are more than 3 peaks, find only the 3 highest interest peaks"""
     log(
         "Warning: detected more than 3 peaks at: {}x and {}x".format(
@@ -186,7 +182,7 @@ def check_peaks(peaks, props, widths, maximum_cov, dc_args):
     contaminant_width, diploid_width, haploid_width = None, None, None
 
     # Find highest peaks
-    for pos, height in zip(peaks, props["peak_heights"]):
+    for pos, height in zip(peaks, heights):
         if pos < dc_args["max_contam"]:
             if contaminant_peak == None:
                 contaminant_peak = pos
@@ -261,9 +257,8 @@ def write_stats(
     outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: float, TSS: float
 ):
     log("Outputting stats...")
-    out_file = os.path.join(outname + ".stats.txt")  # Create output text filepath
 
-    f = open(out_file, "w")
+    f = open(outname, "w")
     f.write("AUC(Haploid) = {}\n".format(AUC_haplo))
     f.write("AUC(Diploid) = {}\n".format(AUC_diplo))
     f.write("AUC ratio (1 - D/H) = {}\n".format(AUC_ratio))
