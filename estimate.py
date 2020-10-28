@@ -152,7 +152,7 @@ def estimate_haploidy(
     if dc_args["plot"]:
         log("Outputting plots...")
         plot_metrics(
-            input_basename,
+            outfile,
             smoothed,
             peaks,
             heights,
