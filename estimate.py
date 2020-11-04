@@ -54,11 +54,11 @@ def estimate_haploidy(
     heights = [smoothed[i] for i in peaks]
     widths = peak_widths(smoothed, peaks)[0]  # Get peak widths
 
-    if dc_args["max_contam"] is None:
-        dc_args["max_contam"] = peaks[len(peaks) - 1] * 0.30
+    if max_cont is None:
+        max_cont = peaks[len(peaks) - 1] * 0.30
 
-    if dc_args["max_diploid"] is None:
-        dc_args["max_diploid"] = peaks[len(peaks) - 1] * 0.55
+    if max_dip is None:
+        max_dip = peaks[len(peaks) - 1] * 0.55
 
     if debug:
         debug_smooth_histogram(freqs, smoothed, peaks, heights, widths)
@@ -102,11 +102,11 @@ def estimate_haploidy(
         haplotigs_peak_ratio = round(heights[-2] / heights[-1], 3)
 
         if (
-            peaks[0] < dc_args["max_contam"]
+            peaks[0] < max_cont
         ):  # In case found contaminant <-- 2 peaks == contams and higher or lower
             limits["Contaminants"] = math.ceil(peaks[0] + widths[0])
 
-            if peaks[1] < dc_args["max_diploid"]:  # CONTA + DIPLO
+            if peaks[1] < max_dip:  # CONTA + DIPLO
                 limits["Diploid"] = math.ceil(
                     peaks[1] - widths[1]
                 )  # diploid region is between contams and lower border of haploid peak
@@ -123,10 +123,10 @@ def estimate_haploidy(
         log("Found 1 peak at: {}x".format(peaks[0]))
         haplotigs_peak_ratio = 0.0
 
-        if peaks[0] < dc_args["max_contam"]:  # CONTAMINANT ASM
+        if peaks[0] < max_cont:  # CONTAMINANT ASM
             limits["Contaminants"] = math.ceil(peaks[0] + widths[0])
             limits["Diploid"] = math.ceil(peaks[0] + widths[0])
-        elif peaks[0] < dc_args["max_diploid"]:  # DIPLOID ASM
+        elif peaks[0] < max_dip:  # DIPLOID ASM
             limits["Contaminants"] = math.ceil(peaks[0] - widths[0])
             limits["Diploid"] = math.ceil(peaks[0] + widths[0])
         else:  # HAPLOID ASM
@@ -149,7 +149,7 @@ def estimate_haploidy(
 
     write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio, TSS)
 
-    if dc_args["plot"]:
+    if plot:
         log("Outputting plots...")
         plot_metrics(
             outfile,
@@ -183,7 +183,7 @@ def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
 
     # Find highest peaks
     for pos, height in zip(peaks, heights):
-        if pos < dc_args["max_contam"]:
+        if pos < max_cont:
             if contaminant_peak == None:
                 contaminant_peak = pos
                 contaminant_height = height
@@ -192,7 +192,7 @@ def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
                 contaminant_height = height
             else:
                 continue
-        elif pos >= dc_args["max_contam"] and pos < dc_args["max_diploid"]:
+        elif pos >= max_cont and pos < max_dip:
             if diploid_peak == None:
                 diploid_peak = pos
                 diploid_height = height
@@ -213,10 +213,10 @@ def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
 
     # widths = general boundaries <-- may be a problem sometimes
     contaminant_width = math.floor(
-        abs(dc_args["max_contam"] - contaminant_peak)
+        abs(max_cont - contaminant_peak)
     )  # floor of absolute distance between contaminant boundary and highest contaminant peak
     diploid_width = math.floor(
-        abs(dc_args["max_diploid"] - diploid_peak)
+        abs(max_dip - diploid_peak)
     )  # floor of absolute distance between diploid boundary and highest diploid peak
     haploid_width = math.floor(
         abs(maximum_cov - diploid_peak)
@@ -224,19 +224,19 @@ def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
 
     """
     # In case number of peaks lower than max contam is > 1
-    if len([peak for peak in peaks if peak < dc_args["max_contam"]]) > 1 :
+    if len([peak for peak in peaks if peak < max_cont]) > 1 :
         # INCREASE THRESHOLD to detect peaks
         log("WARNING: More than 1 contaminant peak is found. Trying to use only largest found")
 
         print("HELP: Try running with --debug flag and check the histogram curve.")
         print("HELP: If you estimate that there should be no contaminant peaks detected then increase the min_peak (-mp) threshold (currently {}).".format(dc_args["min_peak"]))
-        print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contam"]))
+        print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(max_cont))
         log("Exiting...")
         sys.exit(1)
-    elif len([peak for peak in peaks if (peak >= dc_args["max_contam"] and peak < dc_args["max_diploid"])]) > 1 : # If number of diploid peaks is > 1
+    elif len([peak for peak in peaks if (peak >= max_cont and peak < max_dip)]) > 1 : # If number of diploid peaks is > 1
         log("WARNING: More than 1 diploid peak is found")
         print("HELP: Try running with --debug flag and check the histogram curve.")
-        print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(dc_args["max_contam"], dc_args["max_diploid"]))
+        print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(max_cont, max_dip))
         #print("NOTE: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contaminant"]))
         log("Exiting...")
         sys.exit(1)
