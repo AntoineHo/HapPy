@@ -26,11 +26,7 @@ def estimate_haploidy(
     SIZE = size_from_string(size)
 
     print("# Hap.py estimate")
-    print(
-        "Coverage histogram:\t{0}\nOutput file:\t{1}\nOther arguments:\t{2}\n".format(
-            HIST, outfile, dc_args
-        )
-    )
+    print("Coverage histogram:\t{0}\nOutput file:\t{1}\n".format(HIST, outfile))
     print(
         "===============================================================================\n"
     )
