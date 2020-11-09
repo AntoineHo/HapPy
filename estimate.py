@@ -25,14 +25,6 @@ def estimate_haploidy(
     HIST = check_files(infile)
     SIZE = size_from_string(size)
 
-    # Get other arguments
-    dc_args = {
-        "max_contam": max_cont,
-        "max_diploid": max_dip,
-        "min_peak": min_peak,
-        "plot": plot,
-    }
-
     print("# Hap.py estimate")
     print(
         "Coverage histogram:\t{0}\nOutput file:\t{1}\nOther arguments:\t{2}\n".format(
@@ -69,7 +61,7 @@ def estimate_haploidy(
 
     if len(peaks) > 3:  # In case 3+ peaks:
         peaks, heights, widths = check_peaks(
-            peaks, heights, widths, len(smoothed), dc_args
+            peaks, heights, widths, len(smoothed), max_cont, max_dip
         )
 
     if len(peaks) == 0:
@@ -169,7 +161,7 @@ def estimate_haploidy(
     sys.exit(0)
 
 
-def check_peaks(peaks, heights, widths, maximum_cov, dc_args):
+def check_peaks(peaks, heights, widths, maximum_cov, max_cont, max_dip):
     """In case there are more than 3 peaks, find only the 3 highest interest peaks"""
     log(
         "Warning: detected more than 3 peaks at: {}x and {}x".format(
