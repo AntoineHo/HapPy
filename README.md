@@ -6,6 +6,22 @@ Easy haploidy and size completeness estimation.
 ## 1. General
 This tool helps assess the haploidy and proximity to size completeness.
 
+HapPy computes two values:
+- Area Under Curve (AUC) ratio: the ratio of the AUC of the diploid peak and the AUC of the haploid peak
+- Total Size Score (TSS): the estimated haploid size completeness
+
+For more information, see:
+  **Overcoming uncollapsed haplotypes in long-read assemblies of non-model organisms**, 
+  Nadège Guiglielmoni, Antoine Houtain,Alessandro Derzelle, Karine van Doninck, Jean-François Flot,
+  bioRxiv 2020, doi: https://doi.org/10.1101/2020.03.16.993428 
+
+### Requirements: 
+
+- sambamba
+- scipy
+- pandas
+- numpy
+
 ```
 $ python HapPy/Hap.py -h
 usage: Hap.py [-h] {depth,estimate} ...
@@ -58,4 +74,15 @@ optional arguments:
   -md MAX_DIPLOID, --max-diploid MAX_DIPLOID <INT> Maximum coverage of the diploid peak. Default: [120]
   -mp MIN_PEAK, --min-peak MIN_PEAK <INT> Minimum peak height. Default: [150000]
   -p, --plot      Output plots. Default: False
+```
+
+## 4. Example
+
+Here is an example on how to use HapPy. HapPy requires a sorted BAM file as input. Here the PacBio long reads are mapped to the assembly with minimap2, and the output is sorted with samtools. The sorted BAM file is also indexed with samtools. The module depth computes the coverage histogram from the BAM file, and then the module estimate computes the AUC ratio and TSS. Here the max x value for the contaminant peak is set to 35, the max x value for the diploid peak is set to 120, and the min y for a peak is set to 150000. The expected genome size is set to 102M. 
+
+```
+minimap2 -ax map-pb assembly.fasta.gz pacbio_reads.fasta.gz --secondary=no | samtools sort -o mapping_LR.map-pb.bam -T tmp.ali
+samtools index mapping_LR.map-pb.bam
+Hap.py depth mapping_LR.map-pb.bam happy_output
+Hap.py estimate --max-contaminant 35 --max-diploid 120 --min-peak 150000 happy_output/mapping_LR.map-pb.bam.hist . 102M
 ```
