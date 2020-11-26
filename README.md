@@ -3,6 +3,8 @@
 
 Easy haploidy and size completeness estimation.
 
+[![DOI](https://zenodo.org/badge/299235590.svg)](https://zenodo.org/badge/latestdoi/299235590)
+
 ## 1. General
 This tool helps assess the haploidy and proximity to size completeness.
 
