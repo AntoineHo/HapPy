@@ -1,16 +1,13 @@
 # HapPy
-**Hap**loidy with **Py**thon.
+**Hap**loidy using **Py**thon.
 
-Easy haploidy and size completeness estimation.
+Easy haploidy estimation.
 
 [![DOI](https://zenodo.org/badge/299235590.svg)](https://zenodo.org/badge/latestdoi/299235590)
 
 ## 1. General
-This tool helps assess the haploidy and proximity to size completeness.
-
-HapPy computes two values:
-- Area Under Curve (AUC) ratio: the ratio of the AUC of the diploid peak and the AUC of the haploid peak
-- Total Size Score (TSS): the estimated haploid size completeness
+This tool helps assess the haploidy H of a given assembly.
+H is defined as the fraction of the bases of the genome that are in the collapsed peak C. This metrics is calculated as H=C/(C+U/2), where C is the size of the collapsed peak and U the size of the uncollapsed peak in the per-base coverage histogram of the assembly.
 
 For more information, see:
   **Overcoming uncollapsed haplotypes in long-read assemblies of non-model organisms**, 
@@ -28,12 +25,12 @@ For more information, see:
 $ python HapPy/Hap.py -h
 usage: Hap.py [-h] {depth,estimate} ...
 
-Estimate assembly haploidy based on base depth of coverage histogram.
+Estimate assembly haploidy based on coverage depth.
 
 positional arguments:
   {depth,estimate}
     depth           Obtain a depth of coverage histogram for the assembly using sambamba depth base.
-    estimate        Computes haploidy score based on the coverage distribution.
+    estimate        Computes the haploidy score based on the coverage distribution.
 
 optional arguments:
   -h, --help        show this help message and exit
@@ -63,12 +60,11 @@ Takes .hist output file of `Hap.py depth` and outputs metrics in a text file and
 $ python HapPy/Hap.py estimate -h 
 usage: Hap.py estimate [-h] [-mc MAX_CONTAMINANT] [-md MAX_DIPLOID]
                        [-mp MIN_PEAK] [-p ]
-                       HIST OUT SIZE
+                       HIST OUT
 
 positional arguments:
   HIST                  <STRING> A path to the histogram output of the `Hap.py depth` command (.hist file).
   OUT                   <STRING> A path for the output directory.
-  SIZE                  <STRING> An expected assembly size (in bp) to compute the Total Size Score. Valid multipliers are (K, M, G) e.g.: 10K = 10000.
                                                                               
 optional arguments:
   -h, --help            show this help message and exit
@@ -80,11 +76,11 @@ optional arguments:
 
 ## 4. Example
 
-Here is an example on how to use HapPy. HapPy requires a sorted BAM file as input. Here the PacBio long reads are mapped to the assembly with minimap2, and the output is sorted with samtools. The sorted BAM file is also indexed with samtools. The module depth computes the coverage histogram from the BAM file, and then the module estimate computes the AUC ratio and TSS. Here the max x value for the contaminant peak is set to 35, the max x value for the diploid peak is set to 120, and the min y for a peak is set to 150000. The expected genome size is set to 102M. 
+Here is an example on how to use HapPy. HapPy requires a sorted BAM file as input. Here the PacBio long reads are mapped to the assembly with minimap2, and the output is sorted with samtools. The sorted BAM file is also indexed with samtools. The module depth computes the coverage histogram from the BAM file, and then the module estimate computes the haploidy metrics H. Here the max x value for the contaminant peak is set to 35, the max x value for the diploid peak is set to 120, and the min y for a peak is set to 150000. The expected genome size is set to 102M. 
 
 ```
 minimap2 -ax map-pb assembly.fasta.gz pacbio_reads.fasta.gz --secondary=no | samtools sort -o mapping_LR.map-pb.bam -T tmp.ali
 samtools index mapping_LR.map-pb.bam
 Hap.py depth mapping_LR.map-pb.bam happy_output
-Hap.py estimate --max-contaminant 35 --max-diploid 120 --min-peak 150000 happy_output/mapping_LR.map-pb.bam.hist . 102M
+Hap.py estimate --max-contaminant 35 --max-diploid 120 --min-peak 150000 happy_output/mapping_LR.map-pb.bam.hist . 
 ```
