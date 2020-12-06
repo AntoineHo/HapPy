@@ -6,12 +6,12 @@ Easy haploidy estimation.
 [![DOI](https://zenodo.org/badge/299235590.svg)](https://zenodo.org/badge/latestdoi/299235590)
 
 ## 1. General
-This tool helps assess the haploidy *H* of a given assembly.
-*H* is defined as the fraction of the bases of the genome that are in the collapsed peak *C*. This metrics is calculated as *H*=*C*/(*C*+*U*/2), where *C* is the size (peak area) of the collapsed peak and *U* the size of the uncollapsed peak in the per-base coverage histogram of the assembly.
+This tool assesses the haploidy *H* of a given assembly.
+*H* is defined as the fraction of the bases of the genome that are in the collapsed peak *C*. This metrics is calculated as *H*=*C*/(*C*+*U*/2), where *C* is the size (area) of the collapsed peak and *U* the size of the uncollapsed peak in the per-base coverage histogram of the assembly.
 
 For more information, see:
   **Overcoming uncollapsed haplotypes in long-read assemblies of non-model organisms**, 
-  Nadège Guiglielmoni, Antoine Houtain, Alessandro Derzelle, Karine van Doninck, Jean-François Flot,
+  Nadège Guiglielmoni, Antoine Houtain, Alessandro Derzelle, Karine Van Doninck, Jean-François Flot,
   bioRxiv 2020, doi: https://doi.org/10.1101/2020.03.16.993428 
 
 ### Requirements: 
@@ -53,7 +53,7 @@ optional arguments:
 ```
 
 ## 3. Module estimate
-Takes .hist output file of `Hap.py depth` and outputs metrics in a text file and optionnally a graph.
+Takes the .hist output file of `Hap.py depth` and outputs metrics in a text file and optionnally as a graph.
 
 ### Usage:
 ```
@@ -76,7 +76,7 @@ optional arguments:
 
 ## 4. Example
 
-Here is an example on how to use `HapPy`. `HapPy` requires a sorted BAM file as input. Here the PacBio long reads are mapped to the assembly with `minimap2`, and the output is sorted with `samtools`. The sorted BAM file is also indexed with `samtools`. The module depth computes the coverage histogram from the BAM file, and then the module estimate computes the haploidy metrics *H*. Here the max *x* value for the contaminant peak is set to 35, the max *x* value for the diploid peak is set to 120, and the min *y* for a peak is set to 150000.
+Here is an example on how to use `HapPy`. `HapPy` requires a sorted BAM file as input. Here the PacBio long reads are mapped to the assembly with `minimap2`, and the output is sorted with `samtools`. The sorted BAM file is also indexed with `samtools`. The module depth computes the coverage histogram from the BAM file, and the module then estimates the haploidy metrics *H*. Here the max *x* value for the contaminant peak is set to 35, the max *x* value for the diploid peak is set to 120, and the min *y* for a peak is set to 150000.
 
 ```
 minimap2 -ax map-pb assembly.fasta.gz pacbio_reads.fasta.gz --secondary=no | samtools sort -o mapping_LR.map-pb.bam -T tmp.ali
