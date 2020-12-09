@@ -14,7 +14,7 @@ options:
     -v, --version               shows the version
 
 The subcommands are:
-    depth       Compute coverage histogram.
+    coverage    Compute coverage histogram.
     estimate    Finds peaks and modality, then computes scores of haploidy.
 """
 
