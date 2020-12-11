@@ -59,10 +59,10 @@ class Coverage(AbstractCommand):
 
 class Estimate(AbstractCommand):
     """Estimate command
-    Compute AUC ratio and TSS from coverage histogram.
+    Compute haploidy from coverage histogram.
 
     usage:
-        estimate [--max-contaminant=INT] [--max-diploid=INT] [--min-peak=INT] --size=INT --outstats=FILE [--plot] <coverage.hist>
+        estimate [--max-contaminant=INT] [--max-diploid=INT] --size=INT --outstats=FILE [--plot] <coverage.hist>
         
     arguments:
         coverage.hist               Coverage histogram.
@@ -70,9 +70,8 @@ class Estimate(AbstractCommand):
     options:
         -C, --max-contaminant=INT   Maximum coverage of contaminants.
         -D, --max-diploid=INT       Maximum coverage of the diploid peak.
-        -M, --min-peak=INT          Minimum peak height.
         -S, --size=INT              Estimated haploid genome size.
-        -O, --outstats=FILE         Path where the AUC ratio and TSS values are written.
+        -O, --outstats=FILE         Path where haploidy value is written.
         -p, --plot                  Generate histogram plot.
     """
 
@@ -82,7 +81,6 @@ class Estimate(AbstractCommand):
             self.args["<coverage.hist>"],
             self.args["--max-contaminant"],
             self.args["--max-diploid"],
-            self.args["--min-peak"],
             self.args["--size"],
             self.args["--outstats"],
         )

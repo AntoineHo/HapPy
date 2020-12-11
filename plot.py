@@ -71,7 +71,7 @@ def plot_metrics(
     ax[0].set_xlim(-4, len(smoothed_freq) + 4)
     ax[0].set_ylim(0, 1.05 * max(smoothed_freq))
     ax[0].set_title(
-        "\nHaplotig ratio = {}\nAUC ratio = {}\nTSS = {}".format(
+        "\nHaplotig ratio = {}\nHaploidy = {}\nTSS = {}".format(
             haplotigs_peak_ratio, round(AUC_ratio, 3), round(TSS, 3)
         ),
         fontsize=16,

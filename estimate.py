@@ -10,14 +10,7 @@ from plot import *
 
 
 def estimate_haploidy(
-    infile,
-    max_cont: int,
-    max_dip: int,
-    min_peak: int,
-    size: int,
-    outfile,
-    plot=True,
-    debug=False,
+    infile, max_cont: int, max_dip: int, size: int, outfile, plot=True, debug=False
 ):
     """Finds peaks and modality, then computes scores of haploidy"""
 
@@ -129,13 +122,11 @@ def estimate_haploidy(
     AUC_ratio = 1 - (AUC_diplo / AUC_haplo)
     print("AUC(Haploid) (= H) = {}".format(AUC_haplo))
     print("AUC(Diploid) (= D) = {}".format(AUC_diplo))
-    print("AUC ratio (1 - D/H) = {}".format(round(AUC_ratio, 3)))
+    print("Haploidy = {}".format(round(AUC_ratio, 3)))
 
-    print("AUC(Haploid) + AUC(Diploid) / 2 = {}".format(AUC_haplo + AUC_diplo / 2))
     TSS = 1 - abs(SIZE - (AUC_haplo + AUC_diplo / 2)) / SIZE
-    print("Total Size Score = {}".format(round(TSS, 3)))
 
-    write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio, TSS)
+    write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio)
 
     if plot:
         log("Outputting plots...")
@@ -241,15 +232,11 @@ def check_peaks(peaks, heights, widths, maximum_cov, max_cont, max_dip):
     return newpeaks, newheights, newwidths
 
 
-def write_stats(
-    outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: float, TSS: float
-):
+def write_stats(outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: float):
     log("Outputting stats...")
 
     f = open(outname, "w")
     f.write("AUC(Haploid) = {}\n".format(AUC_haplo))
     f.write("AUC(Diploid) = {}\n".format(AUC_diplo))
-    f.write("AUC ratio (1 - D/H) = {}\n".format(AUC_ratio))
-    f.write("AUC(Haploid) + AUC(Diploid)/2 = {}\n".format(AUC_haplo + AUC_diplo / 2))
-    f.write("Total Size Score = {}\n".format(TSS))
-    f.close()
+    f.write("Haploidy = {}\n".format(AUC_ratio))
+
