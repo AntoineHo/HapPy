@@ -20,6 +20,7 @@ For more information, see:
 - `scipy`
 - `pandas`
 - `numpy`
+- `matplotlib`
 
 ```
 $ python HapPy/main.py -h
