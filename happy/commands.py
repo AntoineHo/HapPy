@@ -5,13 +5,18 @@
 # Also based on Cyril Mathey-Doret (cmdoret) commands.py in hicstuff
 # https://github.com/koszullab/hicstuff
 
-from docopt import docopt
+# General
 import sys, os, shutil
 import tempfile
 from os.path import join, dirname
-import coverage as happyc
-import estimate as happye
-import autoestimate as happyae
+
+# Commands
+from docopt import docopt
+
+# Happy
+import happy.coverage as happyc
+import happy.estimate as happye
+import happy.autoestimate as happyae
 
 
 class AbstractCommand:

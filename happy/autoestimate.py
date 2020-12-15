@@ -1,21 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os, sys, math
-from utils import *
+# General
+import os, sys, math, json
+from itertools import combinations, chain # Obtaining peaks combinations
 
+# Happy
+from happy.utils import *
+from happy.plot import *
+
+# Stats
 from scipy.stats import pearsonr
 from scipy.optimize import curve_fit # Fitting multiple gaussian model
 from scipy.signal import savgol_filter  # Smoothing frequency histogram
 from scipy.signal import find_peaks  # Finding peaks
 from scipy.signal import peak_widths # Obtaining peaks widths
-
-from itertools import combinations, chain # Obtaining peaks combinations
-
-import json
-
-from plot import *
-
 
 def auto_estimate_haploidy(
     infile, outfile:str, size: str, min_peak: int, peak_prominence: int,

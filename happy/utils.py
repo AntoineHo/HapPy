@@ -1,11 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# General
 from time import localtime, strftime
 import os, subprocess
+
+# Stats & representation
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 def log(string: str):
     """Prints a log"""

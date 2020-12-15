@@ -1,13 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# General
 import os
+
+# Stats & representation
 import numpy as np
 import matplotlib as mpl
-from utils import *
-
 mpl.use("Agg")
 import matplotlib.pyplot as plt
+
+# Happy
+from happy.utils import *
 
 # DEBUGGING PLOT
 def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, outdir):

@@ -19,11 +19,12 @@ The subcommands are:
     autoest    Builds a model to fit peaks and computes haploidy scores.
 """
 
+# Commands
 from docopt import docopt
 from docopt import DocoptExit
 
-import commands
-
+# Happy
+import happy.commands as commands
 
 def main():
     args = docopt(__doc__, version="0.0.0", options_first=True)
@@ -47,6 +48,9 @@ def main():
 
     # Execute the command.
     command.execute()
+
+def test():
+    return True
 
 
 if __name__ == "__main__":

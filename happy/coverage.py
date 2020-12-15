@@ -1,10 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# General
 import os, sys
+
+# Happy
+from happy.utils import *
+
+# Stats
 import pandas as pd
 import numpy as np
-from utils import *
 
 
 def get_cov_hist(infile, threads: int, outdir):

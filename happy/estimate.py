@@ -1,13 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# General
 import os, sys, math
-from utils import *
+
+# Happy
+from happy.utils import *
+from happy.plot import *
+
+# Stats
 from scipy.signal import savgol_filter  # SmoothingAUC
 from scipy.signal import find_peaks  # Finding peaks
 from scipy.signal import peak_widths
-from plot import *
-
 
 def estimate_haploidy(
     infile, max_cont: int, max_dip: int, size: int, outfile, plot=False, debug=False
