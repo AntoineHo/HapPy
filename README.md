@@ -91,6 +91,6 @@ Here is an example on how to use `HapPy`. `HapPy` requires a sorted BAM file as 
 ```
 minimap2 -ax map-pb assembly.fasta.gz pacbio_reads.fasta.gz --secondary=no | samtools sort -o mapping_LR.map-pb.bam -T tmp.ali
 samtools index mapping_LR.map-pb.bam
-main.py coverage -d happy_output mapping_LR.map-pb.bam 
+Hap.py coverage -d happy_output mapping_LR.map-pb.bam 
 Hap.py estimate --max-contaminant 35 --max-diploid 120 -S 102M -O happy_stats.txt -p happy_output/mapping_LR.map-pb.bam.hist
 ```
