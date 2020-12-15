@@ -11,6 +11,7 @@ import tempfile
 from os.path import join, dirname
 import coverage as happyc
 import estimate as happye
+import autoestimate as happyae
 
 
 class AbstractCommand:
@@ -40,12 +41,12 @@ class Coverage(AbstractCommand):
 
     usage:
         coverage [--threads=1] --outdir=DIR <mapping.bam>
-        
+
     arguments:
         mapping.bam              Sorted BAM file after mapping reads to the assembly.
-        
+
     options:
-        -t, --threads=INT        Number of parallel threads allocated for 
+        -t, --threads=INT        Number of parallel threads allocated for
                                  sambamba [default: 1].
         -d, --outdir=DIR         Path where the .cov and .hist files are written.
     """
@@ -63,16 +64,16 @@ class Estimate(AbstractCommand):
 
     usage:
         estimate [--max-contaminant=INT] [--max-diploid=INT] --size=INT --outstats=FILE [--plot] <coverage.hist>
-        
+
     arguments:
         coverage.hist               Coverage histogram.
-        
+
     options:
         -C, --max-contaminant=INT   Maximum coverage of contaminants.
         -D, --max-diploid=INT       Maximum coverage of the diploid peak.
         -S, --size=INT              Estimated haploid genome size.
         -O, --outstats=FILE         Path where haploidy value is written.
-        -p, --plot                  Generate histogram plot.
+        -P, --plot                  Generate histogram plot.
     """
 
     def execute(self):
@@ -83,4 +84,44 @@ class Estimate(AbstractCommand):
             self.args["--max-diploid"],
             self.args["--size"],
             self.args["--outstats"],
+        )
+
+class Autoest(AbstractCommand):
+    """Auto estimate command
+    Detect peaks and computes haploidy metrics from the coverage histogram.
+
+    usage:
+        autoest [--min-peak=INT] [--prominence=INT] [--window=FLOAT] [--score=FLOAT] [--plot] [--debug] --size=INT --outstats=FILE <coverage.hist>
+
+    arguments:
+        coverage.hist               Coverage histogram.
+
+    options:
+        -S, --size=STRING           Estimated haploid genome size
+                                    (Recognized modifiers: K,M,G).
+        -O, --outstats=FILE         Path to file where the metrics values will be written.
+        -M, --min-peak=INT          Minimum peak height
+                                    [default: 15000].
+        -P, --prominence=INT        Minimum peak prominence (see SciPy docs)
+                                    [default: 10000].
+        -W, --window=FLOAT          Window size for peak matching modifier
+                                    [default: 1.5].
+        -sc, --score=FLOAT          Score threshold for outputting to file
+                                    [default: 0.75].
+        -p, --plot                  Generate plots.
+        -d, --debug                 Generate debug histogram plot.
+    """
+
+    def execute(self):
+
+        happyae.auto_estimate_haploidy(
+            self.args["<coverage.hist>"],
+            self.args["--outstats"],
+            self.args["--size"],
+            int(self.args["--min-peak"]),
+            int(self.args["--prominence"]),
+            float(self.args["--window"]),
+            float(self.args["--score"]),
+            self.args["--plot"],
+            self.args["--debug"],
         )

@@ -25,6 +25,10 @@ def get_cov_hist(infile, threads: int, outdir):
     else:
         os.makedirs(outdir)  # Create directory following path
 
+    if not which("sambamba") :
+        log("ERROR: Sambamba is not found!")
+        sys.exit(1)
+
     # Read coverage histogram
     coverage_output = os.path.join(outdir, os.path.basename(infile) + ".cov")
     if not os.path.isfile(coverage_output):  # In case no coverage file found

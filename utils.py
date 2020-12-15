@@ -4,6 +4,7 @@
 from time import localtime, strftime
 import os, subprocess
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def log(string: str):
@@ -26,54 +27,38 @@ def check_files(file):
 
 def size_from_string(string: str) -> int:
     size_multiplier = {"K": 1000, "M": 1000000, "G": 1000000000}
-    if string[-1].upper() in ["K", "M", "G"] and string[:-1].isdigit():
-        return int(string[:-1]) * size_multiplier[string[-1]]
-    elif string.isdigit():
-        return int(string)
+    if string[-1].upper() in ["K", "M", "G"] and isfloat(string[:-1]):
+        return int(float(string[:-1]) * size_multiplier[string[-1]])
+    elif isfloat(string):
+        if int(float(string)) < 1000 :
+            print("WARNING: Small genome size, did you forget a multiplier?")
+        return int(float(string))
     else:  # ERROR
         raise Exception("Size argument is not a valid number.")
 
+def gauss(x, mu, sigma, A) :
+    """Returns a gaussian curve"""
+    return A*np.exp(-(x-mu)**2/2/sigma**2)
 
-def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths):
-    print("freqs:", freqs)
-    print("Smoothed:", smoothed)
-    print("Peaks:", peaks)
-    print("Heights:", heights)
-    print("Widths:", widths)
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-    fig, ax = plt.subplots(figsize=(10, 10))
-    # Main distribution
-    ax.plot(smoothed, color="k", lw=1.3, zorder=5)
-    ax.fill_between(
-        np.arange(len(smoothed)),
-        smoothed,
-        np.zeros(len(smoothed)),
-        color="red",
-        lw=0,
-        alpha=0.35,
-        zorder=5,
-        label="Smoothed distribution",
-    )
-    # Vertical lines
-    ax.vlines(
-        peaks,
-        min(smoothed),
-        1.06 * max(smoothed),
-        label="Peaks found",
-        linewidth=1.0,
-        zorder=7,
-    )
-    # Peaks found
-    ax.scatter(
-        peaks, heights, marker="x", s=100, color="b", label="Local maximum", zorder=9
-    )
-    # Formatting plot
-    ax.set_xlim(-4, len(smoothed) + 4)
-    ax.set_ylim(0, 1.05 * max(smoothed))
-    ax.set_xlabel("Coverage", fontsize=15)
-    ax.set_ylabel("Frequency", fontsize=15)
-    ax.legend()
-    ax.locator_params(nbins=40)
-    #
-    fig.savefig(os.path.join(outdir, "debugplot.png"))
-    plt.close(fig)
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return False
+
+def isfloat(string) :
+    try :
+        float(string)
+        return True
+    except :
+        return False

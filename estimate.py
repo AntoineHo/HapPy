@@ -10,7 +10,7 @@ from plot import *
 
 
 def estimate_haploidy(
-    infile, max_cont: int, max_dip: int, size: int, outfile, plot=True, debug=False
+    infile, max_cont: int, max_dip: int, size: int, outfile, plot=False, debug=False
 ):
     """Finds peaks and modality, then computes scores of haploidy"""
 
@@ -31,18 +31,28 @@ def estimate_haploidy(
     # Apply Savitzky-Golay filter to smooth coverage histogram
     log("Analysing curve!")
     smoothed = [s for s in savgol_filter(freqs, 41, 3) if s >= 0]
-    peaks = find_peaks(smoothed)[0]
+    peaks, props = find_peaks(smoothed, height=15000, prominence=10000)
     heights = [smoothed[i] for i in peaks]
     widths = peak_widths(smoothed, peaks)[0]  # Get peak widths
 
     if max_cont is None:
         max_cont = peaks[len(peaks) - 1] * 0.30
+    else :
+        try :
+            max_cont = int(max_cont)
+        except :
+            raise Exception("ERROR: Invalid value of --max-cont!")
 
     if max_dip is None:
         max_dip = peaks[len(peaks) - 1] * 0.55
+    else :
+        try :
+            max_dip = int(max_dip)
+        except :
+            raise Exception("ERROR: Invalid value of --max-dip!")
 
     if debug:
-        debug_smooth_histogram(freqs, smoothed, peaks, heights, widths)
+        debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, os.getcwd())
 
     params, cov = None, None
     peak_ratios = None
@@ -120,13 +130,15 @@ def estimate_haploidy(
 
     log("Scoring assembly...")
     AUC_ratio = 1 - (AUC_diplo / AUC_haplo)
-    print("AUC(Haploid) (= H) = {}".format(AUC_haplo))
-    print("AUC(Diploid) (= D) = {}".format(AUC_diplo))
-    print("Haploidy = {}".format(round(AUC_ratio, 3)))
+    Haploidy = AUC_haplo / ( (AUC_diplo)/2 + AUC_haplo )
+    print("AUC(Haploid): H = {}".format(AUC_haplo))
+    print("AUC(Diploid): D = {}".format(AUC_diplo))
+    print("Ratio: 1-(D/H) = {}".format(round(AUC_ratio, 3)))
+    print("Haploidy: H/(H + (D/2)) = {}".format(round(Haploidy, 3)))
 
     TSS = 1 - abs(SIZE - (AUC_haplo + AUC_diplo / 2)) / SIZE
 
-    write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio)
+    write_stats(outfile, AUC_haplo, AUC_diplo, AUC_ratio, Haploidy)
 
     if plot:
         log("Outputting plots...")
@@ -148,7 +160,7 @@ def estimate_haploidy(
     sys.exit(0)
 
 
-def check_peaks(peaks, heights, widths, maximum_cov, max_cont, max_dip):
+def check_peaks(peaks, heights, widths, maximum_cov: int, max_cont: int, max_dip: int):
     """In case there are more than 3 peaks, find only the 3 highest interest peaks"""
     log(
         "Warning: detected more than 3 peaks at: {}x and {}x".format(
@@ -162,7 +174,7 @@ def check_peaks(peaks, heights, widths, maximum_cov, max_cont, max_dip):
 
     # Find highest peaks
     for pos, height in zip(peaks, heights):
-        if pos < max_cont:
+        if pos < max_cont :
             if contaminant_peak == None:
                 contaminant_peak = pos
                 contaminant_height = height
@@ -201,42 +213,19 @@ def check_peaks(peaks, heights, widths, maximum_cov, max_cont, max_dip):
         abs(maximum_cov - diploid_peak)
     )  # floor of absolute distance between haploid peak and max coverage ( == len(x) == number of bins ) from the histogram
 
-    """
-    # In case number of peaks lower than max contam is > 1
-    if len([peak for peak in peaks if peak < max_cont]) > 1 :
-        # INCREASE THRESHOLD to detect peaks
-        log("WARNING: More than 1 contaminant peak is found. Trying to use only largest found")
-
-        print("HELP: Try running with --debug flag and check the histogram curve.")
-        print("HELP: If you estimate that there should be no contaminant peaks detected then increase the min_peak (-mp) threshold (currently {}).".format(dc_args["min_peak"]))
-        print("HELP: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(max_cont))
-        log("Exiting...")
-        sys.exit(1)
-    elif len([peak for peak in peaks if (peak >= max_cont and peak < max_dip)]) > 1 : # If number of diploid peaks is > 1
-        log("WARNING: More than 1 diploid peak is found")
-        print("HELP: Try running with --debug flag and check the histogram curve.")
-        print("HELP: If you estimate that there should be no diploid peaks (or only one) then maybe one is a contaminant or an haploid peak try modifying the max_contaminants and max_diploid arguments (currently {} and {}).".format(max_cont, max_dip))
-        #print("NOTE: If you estimate that there should be a contaminant peak but it is not considered contaminant, then increase the max_contaminant (-mc) optional argument value (currently {}).".format(dc_args["max_contaminant"]))
-        log("Exiting...")
-        sys.exit(1)
-    else :
-        log("WARNING: More than 1 diploid peak is found")
-        print("HELP: Try running with --debug flag and check the histogram curve.")
-        log("Exiting...")
-        sys.exit(1)
-    """
-
     newpeaks = [contaminant_peak, diploid_peak, haploid_peak]
     newheights = [contaminant_height, diploid_height, haploid_height]
     newwidths = [contaminant_width, diploid_width, haploid_width]
     return newpeaks, newheights, newwidths
 
-
-def write_stats(outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: float):
+def write_stats(outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: float,
+                haploidy: float
+               ):
     log("Outputting stats...")
 
     f = open(outname, "w")
     f.write("AUC(Haploid) = {}\n".format(AUC_haplo))
     f.write("AUC(Diploid) = {}\n".format(AUC_diplo))
-    f.write("Haploidy = {}\n".format(AUC_ratio))
-
+    f.write("Ratio = {}\n".format(AUC_ratio))
+    f.write("Haploidy = {}".format(haploidy))
+    f.close()
