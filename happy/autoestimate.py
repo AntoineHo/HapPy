@@ -397,3 +397,4 @@ def write_json_peaks(outfile, json_models) :
     out = os.path.join(os.path.dirname(outfile), os.path.splitext(os.path.basename(outfile))[0] + ".model.json")
     f = open(out, "w")
     json.dump(out_models, f)
+    f.close()
