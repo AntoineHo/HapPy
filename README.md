@@ -50,11 +50,11 @@ $ python /path/to/happy/Hap.py --help
 #### Usage:
 
 ```
-$ python HapPy/main.py -h
+$ python Hap.py -h
 Estimate assembly haploidy based on base depth of coverage histogram.
 
 usage:
-    HapPy [-hv] <command> [<args>...]
+    happy [-hv] <command> [<args>...]
 
 options:
     -h, --help                  shows the help
@@ -70,7 +70,7 @@ This module runs `sambamba` on a read alignment file then reads the output depth
 
 #### Usage:
 ```
-$ python HapPy/main.py coverage -h
+$ python Hap.py coverage -h
 
 Coverage histogram command
     Compute coverage histogram for mapping file.
@@ -92,7 +92,7 @@ Takes the .hist output file of module `coverage` and outputs metrics in a text f
 
 #### Usage:
 ```
-$ python HapPy/main.py estimate -h
+$ python Hap.py estimate -h
 Estimate command
     Compute haploidy from coverage histogram.
 
