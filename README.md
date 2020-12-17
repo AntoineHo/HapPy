@@ -5,6 +5,9 @@ Easy haploidy estimation.
 
 [![DOI](https://zenodo.org/badge/299235590.svg)](https://zenodo.org/badge/latestdoi/299235590)
 
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/AntoineHo/HapPy/blob/master/LICENSEs)
+[![PyPI version](https://badge.fury.io/py/happy-AntoineHo.svg)](https://badge.fury.io/py/happy-AntoineHo)
+
 ## 1. General
 This tool assesses the haploidy *H* of a given assembly.
 *H* is defined as the fraction of the bases of the genome that are in the collapsed peak *C*. This metrics is calculated as *H*=*C*/(*C*+*U*/2), where *C* is the size (area) of the collapsed peak and *U* the size of the uncollapsed peak in the per-base coverage histogram of the assembly.
