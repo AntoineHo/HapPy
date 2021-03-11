@@ -132,5 +132,5 @@ $ happy coverage -d happy_output mapping_LR.map-pb.bam
 
 # Estimate Haploidy
 $ happy estimate --max-contaminant 35 --max-diploid 120 -S 102M \
-  -O happy_stats.txt -p happy_output/mapping_LR.map-pb.bam.hist
+  -O happy_stats.txt -P happy_output/mapping_LR.map-pb.bam.hist
 ```
