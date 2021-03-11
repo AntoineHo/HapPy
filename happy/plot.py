@@ -11,7 +11,10 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 # Happy
-from happy.utils import *
+try : # From pip installation
+    from happy.utils import *
+except : # From local git directory
+    from utils import *
 
 # DEBUGGING PLOT
 def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, outdir):
@@ -110,15 +113,6 @@ def plot_model(x, smoothed, curve_function, popt, peak_opts,
     plt.tight_layout()
     fig.savefig(os.path.join(outdir, outname+".png"))
     plt.close(fig)
-
-
-
-
-
-
-
-
-
 
 
 
@@ -238,7 +232,7 @@ def plot_metrics(
     ax[0].set_xlabel("Coverage", fontsize=15)
     ax[0].set_ylabel("Frequency", fontsize=15)
     ax[0].legend()
-    ax[0].locator_params(nbins=40)
+    ax[0].locator_params(nbins=25)
 
     # AUC
     ax[1].bar(

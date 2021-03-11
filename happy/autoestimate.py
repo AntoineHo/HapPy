@@ -6,8 +6,14 @@ import os, sys, math, json
 from itertools import combinations, chain # Obtaining peaks combinations
 
 # Happy
-from happy.utils import *
-from happy.plot import *
+try :
+    from happy.utils import *
+except :
+    from utils import *
+try :
+    from happy.plot import *
+except :
+    from plot import *
 
 # Stats
 from scipy.stats import pearsonr

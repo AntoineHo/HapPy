@@ -5,8 +5,11 @@
 import os, sys
 
 # Happy
-from happy.utils import *
-
+try :
+    from happy.utils import *
+except :
+    from utils import *
+    
 # Stats
 import pandas as pd
 import numpy as np

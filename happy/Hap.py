@@ -24,7 +24,10 @@ from docopt import docopt
 from docopt import DocoptExit
 
 # Happy
-import happy.commands as commands
+try :
+    import happy.commands as commands
+except :
+    import commands as commands
 
 def main():
     args = docopt(__doc__, version="0.0.0", options_first=True)

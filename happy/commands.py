@@ -14,10 +14,20 @@ from os.path import join, dirname
 from docopt import docopt
 
 # Happy
-import happy.coverage as happyc
-import happy.estimate as happye
-import happy.autoestimate as happyae
+try :
+    import happy.coverage as happyc
+except :
+    import coverage as happyc
 
+try :
+    import happy.estimate as happye
+except :
+    import estimate as happye
+
+try :
+    import happy.autoestimate as happyae
+except :
+    import autoestimate as happyae
 
 class AbstractCommand:
     """Base class for the commands"""
@@ -45,7 +55,7 @@ class Coverage(AbstractCommand):
     Compute coverage histogram for mapping file.
 
     usage:
-        coverage [--threads=1] --outdir=DIR <mapping.bam>
+        coverage [-t --threads=1] -d --outdir=DIR <mapping.bam>
 
     arguments:
         mapping.bam              Sorted BAM file after mapping reads to the assembly.
@@ -68,7 +78,7 @@ class Estimate(AbstractCommand):
     Compute haploidy from coverage histogram.
 
     usage:
-        estimate [--max-contaminant=INT] [--max-diploid=INT] --size=INT --outstats=FILE [--plot] <coverage.hist>
+        estimate [-C --max-contaminant=INT] [-D --max-diploid=INT] [-P --plot] -S --size=INT -O --outstats=FILE <coverage.hist>
 
     arguments:
         coverage.hist               Coverage histogram.
@@ -89,6 +99,7 @@ class Estimate(AbstractCommand):
             self.args["--max-diploid"],
             self.args["--size"],
             self.args["--outstats"],
+            self.args["--plot"],
         )
 
 class Autoest(AbstractCommand):
@@ -96,7 +107,7 @@ class Autoest(AbstractCommand):
     Detect peaks and computes haploidy metrics from the coverage histogram.
 
     usage:
-        autoest [--min-peak=INT] [--prominence=INT] [--window=FLOAT] [--score=FLOAT] [--plot] [--debug] --size=INT --outstats=FILE <coverage.hist>
+        autoest [-M --min-peak=INT] [-P --prominence=INT] [-W --window=FLOAT] [-sc --score=FLOAT] [-p --plot] [-d --debug] -S --size=INT -O --outstats=FILE <coverage.hist>
 
     arguments:
         coverage.hist               Coverage histogram.
