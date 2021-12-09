@@ -15,7 +15,7 @@ This tool assesses the haploidy *H* of a given assembly.
 For more information, see:
   **Overcoming uncollapsed haplotypes in long-read assemblies of non-model organisms**,
   Nadège Guiglielmoni, Antoine Houtain, Alessandro Derzelle, Karine Van Doninck, Jean-François Flot,
-  bioRxiv 2020, doi: https://doi.org/10.1101/2020.03.16.993428
+  BMC Bioinformatics 22:303, doi: https://doi.org/10.1186/s12859-021-04118-3
 
 
 #### Requirements:
