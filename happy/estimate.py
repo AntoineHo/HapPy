@@ -284,5 +284,5 @@ def write_stats(outname: str, AUC_haplo: float, AUC_diplo: float, AUC_ratio: flo
     f.write("AUC(Haploid) = {}\n".format(AUC_haplo))
     f.write("AUC(Diploid) = {}\n".format(AUC_diplo))
     f.write("Ratio = {}\n".format(AUC_ratio))
-    f.write("Haploidy = {}".format(haploidy))
+    f.write("Haploidy = {}\n".format(haploidy))
     f.close()
