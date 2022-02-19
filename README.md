@@ -25,7 +25,6 @@ For more information, see:
   - `pandas`
   - `numpy`
   - `matplotlib`
-  - `docopt`
 
 #### Installation:
 
@@ -38,12 +37,12 @@ $ conda activate happy-env
 ```
 
 2. Install `HapPy`
-- Using `pip`
+- Using `pip` (previous version)
 ```
 $ pip install happy-AntoineHo==0.2.1rc0
 $ happy --help
 ```
-- Using `git`:
+- Using `git` (current version)
 ```
 $ git clone https://github.com/AntoineHo/HapPy.git
 $ python /path/to/happy/Hap.py --help
@@ -54,18 +53,17 @@ $ python /path/to/happy/Hap.py --help
 
 ```
 $ python Hap.py -h
+usage: Hap.py [-h] {coverage,estimate} ...
+
 Estimate assembly haploidy based on base depth of coverage histogram.
 
-usage:
-    happy [-hv] <command> [<args>...]
+positional arguments:
+  {coverage,estimate}
+    coverage            Compute coverage histogram for mapping file.
+    estimate            Compute haploidy from coverage histogram.
 
-options:
-    -h, --help                  shows the help
-    -v, --version               shows the version
-
-The subcommands are:
-    coverage    Compute coverage histogram.
-    estimate    Finds peaks and modality, then computes scores of haploidy.
+optional arguments:
+  -h, --help            show this help message and exit
 ```
 
 ## 3. Module coverage
@@ -74,20 +72,15 @@ This module runs `sambamba` on a read alignment file then reads the output depth
 #### Usage:
 ```
 $ python Hap.py coverage -h
+usage: Hap.py coverage [-h] [-t THREADS] [-d OUTDIR] MAP
 
-Coverage histogram command
-    Compute coverage histogram for mapping file.
+positional arguments:
+  MAP            <FILE> Sorted BAM file after mapping reads to the assembly.
 
-    usage:
-        coverage [--threads=1] --outdir=DIR <mapping.bam>
-
-    arguments:
-        mapping.bam              Sorted BAM file after mapping reads to the assembly.
-
-    options:
-        -t, --threads=INT        Number of parallel threads allocated for
-                                 sambamba [default: 1].
-        -d, --outdir=DIR         Path where the .cov and .hist files are written.
+optional arguments:
+  -h, --help     show this help message and exit
+  -t, --threads  <INT> Number of parallel threads allocated for sambamba. Default: 1
+  -d, --outdir   <DIR> Path where the .cov and .hist files are written. Default: 'out'
 ```
 
 ## 4. Module estimate
@@ -96,23 +89,30 @@ Takes the .hist output file of module `coverage` and outputs metrics in a text f
 #### Usage:
 ```
 $ python Hap.py estimate -h
-Estimate command
-    Compute haploidy from coverage histogram.
+usage: Hap.py estimate [-h] -s SIZE -o OUTSTATS [-m MIN_PEAK] [-p PROMINENCE]
+                       [-vh VALLEY_HEIGHT] [-vp VALLEY_PROMINENCE] [-w WINDOW]
+                       [-ll LIMIT_LOW] [-ld LIMIT_DIPLOID] [-lh LIMIT_HIGH]
+                       [--plot] [--debug] [--no-smooth]
+                       COV
 
-    usage:
-        estimate [--max-contaminant=INT] [--max-diploid=INT] [--min-peak=INT]
-                 --size=INT --outstats=FILE [--plot] <coverage.hist>
+positional arguments:
+  COV                   <FILE> Coverage histogram file.
 
-    arguments:
-        coverage.hist               Coverage histogram.
-
-    options:
-        -C, --max-contaminant=INT   Maximum coverage of contaminants.
-        -D, --max-diploid=INT       Maximum coverage of the diploid peak.
-        -M, --min-peak=INT          Minimum peak height.
-        -S, --size=INT              Estimated haploid genome size.
-        -O, --outstats=FILE         Path where the AUC ratio and TSS values are written.
-        -p, --plot                  Generate histogram plot.
+optional arguments:
+  -h, --help               show this help message and exit
+  -s, --size               <STRING> Estimated haploid genome size. (Recognized modifiers: K,M,G).
+  -o, --outstats           <FILE> Path where haploidy value is written.
+  -m, --min-peak           <INT> Minimum peak height (see SciPy doc). Default: 15000
+  -p, --prominence         <INT> Minimum peak prominence (see SciPy docs). Default: 10000
+  -vh, --valley-height     <INT> Minimum valley height (abs). Default: 15000
+  -vp, --valley-prominence <INT> Minimum valley prominence (abs). Default: 10000
+  -w, --window             <INT> Window length to use in savgol filter. Default: 41
+  -ll, --limit-low         <INT> Lower threshold of coverage (lower than diploid peak). Default: auto.
+  -ld, --limit-diploid     <INT> Middle threshold of coverage (between diploid and haploid peaks). Default: auto.
+  -lh, --limit-high        <INT> Upper threshold of coverage (higher than haploid peak). Default: auto.
+  --plot                   Generate histogram plot. Default: False
+  --debug                  Generate more informative plots to debug. Default: False
+  --no-smooth              Skip the smoothing step. Default: False
 ```
 
 ## 5. Example
@@ -130,7 +130,9 @@ $ samtools index mapping_LR.map-pb.bam
 # Obtain coverage histogram with sambamba
 $ happy coverage -d happy_output mapping_LR.map-pb.bam
 
-# Estimate Haploidy
-$ happy estimate --max-contaminant 35 --max-diploid 120 -S 102M \
-  -O happy_stats.txt -P happy_output/mapping_LR.map-pb.bam.hist
+# Estimate Haploidy (manually input peak limits)
+$ happy estimate --limit-low 35 --limit-diploid 120 --limit-high 200 -S 102M \
+  -o happy_stats --plot happy_output/mapping_LR.map-pb.bam.hist
+# Estimate Haploidy (try to detect peaks and limits automatically)
+$ happy estimate -S 102M -p happy_stats --plot happy_output/mapping_LR.map-pb.bam.hist
 ```
