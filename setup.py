@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="happy-AntoineHo",
-    version="0.2.1c",
+    version="0.3.0",
     author="Antoine Houtain",
     author_email="antoine.houtain@gmail.com",
     description="Haploidy with Python",
@@ -23,7 +23,6 @@ setuptools.setup(
           'scipy',
           'matplotlib',
           'pandas',
-          'docopt',
       ],
     python_requires='>=3.7',
     entry_points={
