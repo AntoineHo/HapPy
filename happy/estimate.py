@@ -157,7 +157,11 @@ def estimate_haploidy(
     if skip_smooth :
         smoothed = freqs
     else :
-        smoothed = [s for s in savgol_filter(freqs, window, 3) if s >= 0]
+        if len(freqs) <= window :
+            print("WARNING: SKIPPED smoothing because max coverage < window size setting.\nTo avoid this warning set a lower '-w' or use '--no-smooth'.")
+            smoothed = freqs
+        else :
+            smoothed = [s for s in savgol_filter(freqs, window, 3) if s >= 0]
 
     limits = {
         "low":  limit_low,
