@@ -4,31 +4,75 @@
 # General
 import os
 
-# Stats & representation
+# Stats
 import numpy as np
+
+# Plots
 import matplotlib as mpl
-mpl.use("Agg")
 import matplotlib.pyplot as plt
+mpl.use("Agg")
 
 # Happy
-try : # From pip installation
+try :
     from happy.utils import *
-except : # From local git directory
+except :
     from utils import *
 
-# DEBUGGING PLOT
-def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, outdir):
-    """Plot an histogram to adjust options"""
-    # NOTE useless here
-    #print("freqs:", freqs)
-    #print("Smoothed:", smoothed)
-    #print("Peaks:", peaks)
-    #print("Heights:", heights)
-    #print("Widths:", widths)
 
+# DEBUGGING PLOTS
+def debug_plot_peak_errors(data, smoothed, peaks_found, input_limits, detected_limits, smooth_window_size, outfile, skip_smooth) :
+    """Plot an histogram to adjust options"""
+    fig, ax = plt.subplots(figsize=(10, 10))
+    # Main distribution
+    ax.plot(data, color="k", lw=1.0, zorder=5, label="input data")
+    ax.plot(smoothed, color="r", lw=1.0, zorder=5)
+    label = "Frequencies" if skip_smooth else "Smoothed distribution (window={})".format(smooth_window_size)
+    ax.fill_between(
+        np.arange(len(smoothed)),
+        smoothed,
+        np.zeros(len(smoothed)),
+        color="red",
+        lw=0, alpha=0.35, zorder=5,
+        label=label
+    )
+    # Vertical lines
+    ax.vlines(
+        peaks_found, min(smoothed), 1.06 * max(smoothed),
+        label="Peaks found", linewidth=1.0, zorder=7,
+    )
+
+    input_limits = [i for i in input_limits if i is not None]
+    if len(input_limits) > 0 :
+        ax.vlines(
+            input_limits, min(smoothed), 1.06 * max(smoothed),
+            label="Input limits", linewidth=1.0, zorder=7,
+            linestyle="dashed", color = "r"
+        )
+
+    ax.vlines(
+        detected_limits, min(smoothed), 1.06 * max(smoothed),
+        label="Detected limits", linewidth=1.0, zorder=7,
+        linestyle="dashed", color = "b"
+    )
+
+    # Formatting plot
+    ax.set_xlim(-4, len(smoothed) + 4)
+    ax.set_ylim(0, 1.05 * max(smoothed))
+    ax.set_xlabel("Coverage", fontsize=15)
+    ax.set_ylabel("Frequency", fontsize=15)
+    ax.legend()
+    ax.locator_params(nbins=40)
+    #
+    fig.savefig(outfile + ".debug.plot_1.png")
+    plt.close(fig)
+
+
+def debug_smooth_histogram(smoothed, peaks, heights, outfile, skip_smooth):
+    """Plot an histogram to adjust options"""
     fig, ax = plt.subplots(figsize=(10, 10))
     # Main distribution
     ax.plot(smoothed, color="k", lw=1.3, zorder=5)
+    label = "Frequencies" if skip_smooth else "Smoothed distribution"
     ax.fill_between(
         np.arange(len(smoothed)),
         smoothed,
@@ -37,7 +81,7 @@ def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, outdir):
         lw=0,
         alpha=0.35,
         zorder=5,
-        label="Smoothed distribution",
+        label=label,
     )
     # Vertical lines
     ax.vlines(
@@ -60,8 +104,11 @@ def debug_smooth_histogram(freqs, smoothed, peaks, heights, widths, outdir):
     ax.legend()
     ax.locator_params(nbins=40)
     #
-    fig.savefig(os.path.join(outdir, "debugplot.png"))
+    fig.savefig(outfile + ".debug.plot_2.png")
     plt.close(fig)
+
+
+
 
 # AUTO ESTIMATE MODULE
 def plot_model(x, smoothed, curve_function, popt, peak_opts,
@@ -117,9 +164,8 @@ def plot_model(x, smoothed, curve_function, popt, peak_opts,
 
 
 
-
-
 # ESTIMATE MODULE
+""" # DEPRECATED
 def plot_curves(
     combination,
     actual_curve,
@@ -158,8 +204,10 @@ def plot_curves(
     title_string += "Determined peaks: ({})".format(",".join(str(i) for i in determined_peaks_ordered))
     ax.set_title(title_string)
 
-    plt.show()
-
+    #plt.show()
+    fig.savefig(outname)
+    plt.close(fig)
+"""
 
 def plot_metrics(
     outname,
@@ -170,9 +218,11 @@ def plot_metrics(
     haplotigs_peak_ratio,
     AUC_ratio,
     TSS,
-    AUC_conta,
+    AUC_low,
     AUC_diplo,
     AUC_haplo,
+    AUC_high,
+    skip_smooth
 ):
 
     plotfile = os.path.join(outname + ".plot.png")  # Create plot filename
@@ -185,6 +235,7 @@ def plot_metrics(
     )
     # Main distribution
     ax[0].plot(smoothed_freq, color="k", lw=1.3, zorder=5)
+    label = "Frequencies" if skip_smooth else "Smoothed frequencies"
     ax[0].fill_between(
         np.arange(len(smoothed_freq)),
         smoothed_freq,
@@ -193,7 +244,7 @@ def plot_metrics(
         lw=0,
         alpha=0.35,
         zorder=5,
-        label="Smoothed distribution",
+        label=label,
     )
     # Vertical lines
     ax[0].vlines(
@@ -205,12 +256,13 @@ def plot_metrics(
         zorder=7,
     )
     for k, v in limits.items():
-        col = "r" if k == "Contaminants" else "g"
+        col = "r" if k in ["low", "high"] else "g"
+        name = k if k in ["low", "high"] else "dip/hap"
         ax[0].vlines(
             [v],
             0,
             1.06 * max(smoothed_freq),
-            label="Limit for " + k,
+            label="Limit for {} coverage".format(name),
             linewidth=1.0,
             color=col,
             zorder=7,
@@ -232,19 +284,19 @@ def plot_metrics(
     ax[0].set_xlabel("Coverage", fontsize=15)
     ax[0].set_ylabel("Frequency", fontsize=15)
     ax[0].legend()
-    ax[0].locator_params(nbins=25)
+    ax[0].locator_params(nbins=40)
 
     # AUC
     ax[1].bar(
-        np.arange(3),
-        [AUC_conta, AUC_diplo, AUC_haplo],
-        color=["darkgray", "violet", "red"],
+        np.arange(4),
+        [AUC_low, AUC_diplo, AUC_haplo, AUC_high],
+        color=["#004E64", "#D4CBE5", "#3FA34D", "#E63462"],
         edgecolor="k",
         zorder=10,
     )
-    ax[1].set_xticks(np.arange(3))
+    ax[1].set_xticks(np.arange(4))
     ax[1].set_xticklabels(
-        ["Contam", "Diploid", "Haploid"], rotation="vertical", fontsize=13
+        ["Low", "Diploid", "Haploid", "High"], rotation="vertical", fontsize=13
     )
     ax[1].set_ylabel("Area Under Curve", fontsize=15)
     ax[1].yaxis.tick_right()
