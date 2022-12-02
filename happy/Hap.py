@@ -11,7 +11,7 @@ def execute_coverage(args) :
         import coverage as happyc
 
     happyc.get_cov_hist(
-        args.MAP[0], args.threads[0], args.outdir[0]
+        args.MAP[0], args.threads[0], args.outdir[0], args.diploid
     )
 
 def execute_estimate(args) :
@@ -62,6 +62,7 @@ def main():
     cov.add_argument("MAP",             nargs=1, type=str,                  help="<FILE> Sorted BAM file after mapping reads to the assembly.")
     cov.add_argument("-t", "--threads", nargs=1, type=int, default=[1],     help="<INT> Number of parallel threads allocated for sambamba. Default: %(default)s")
     cov.add_argument("-d", "--outdir",  nargs=1, type=str, default=["out"], help="<DIR> Path where the .cov and .hist files are written. Default: %(default)s")
+    cov.add_argument("--diploid",       action="store_true",                help="Allows for multimapping reads in sambamba filters. Default: %(default)s")
     cov.set_defaults(func=execute_coverage)
 
     est = subparsers.add_parser('estimate', help="Compute haploidy from coverage histogram.")

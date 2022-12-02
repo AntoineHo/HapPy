@@ -9,13 +9,13 @@ try :
     from happy.utils import *
 except :
     from utils import *
-    
+
 # Stats
 import pandas as pd
 import numpy as np
 
 
-def get_cov_hist(infile, threads: int, outdir):
+def get_cov_hist(infile, threads: int, outdir, diploid):
     """Finds peaks and modality, then computes scores of haploidy"""
 
     print("# Hap.py coverage")
@@ -43,7 +43,11 @@ def get_cov_hist(infile, threads: int, outdir):
         log("Starting sambamba depth...")
         coverage_output = os.path.abspath(coverage_output)
         dc_sambamba = {"BAM": infile, "threads": threads, "out": coverage_output}
-        cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
+        cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0"
+        if diploid :
+            # From sambamba doc: the default is -F 'mapping_quality > 0 and not duplicate and not failed_quality_control'
+            cmd += " -F 'not duplicate and not failed_quality_control'" # allows for multimapping
+        cmd += " {BAM}"
         cmd = cmd.format(**dc_sambamba)
         sambamba_returncode = run(cmd)
         if sambamba_returncode == 1:
