@@ -11,7 +11,7 @@ def execute_coverage(args) :
         import coverage as happyc
 
     happyc.get_cov_hist(
-        args.MAP[0], args.threads[0], args.outdir[0], args.diploid
+        args.MAP[0], args.threads[0], args.outdir[0], args.diploid, args.samtools[0],
     )
 
 def execute_estimate(args) :
@@ -63,6 +63,7 @@ def main():
     cov.add_argument("-t", "--threads", nargs=1, type=int, default=[1],     help="<INT> Number of parallel threads allocated for sambamba. Default: %(default)s")
     cov.add_argument("-d", "--outdir",  nargs=1, type=str, default=["out"], help="<DIR> Path where the .cov and .hist files are written. Default: %(default)s")
     cov.add_argument("--diploid",       action="store_true",                help="Allows for multimapping reads in sambamba filters. Default: %(default)s")
+    cov.add_argument("--samtools",      nargs=1, type=str,                  help="<PATH> When using the --diploid flag only, which samtools executable to use. Due to a problem in sambamba depth base with -F 'mapping quality >= 0', samtools is required to obtain coverage in diploid assemblies.")
     cov.set_defaults(func=execute_coverage)
 
     est = subparsers.add_parser('estimate', help="Compute haploidy from coverage histogram.")

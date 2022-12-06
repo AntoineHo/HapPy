@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 
 
-def get_cov_hist(infile, threads: int, outdir, diploid):
+def get_cov_hist(infile, threads: int, outdir, diploid, samtools_path):
     """Finds peaks and modality, then computes scores of haploidy"""
 
     print("# Hap.py coverage")
@@ -42,20 +42,29 @@ def get_cov_hist(infile, threads: int, outdir, diploid):
     if not os.path.isfile(coverage_output):  # In case no coverage file found
         log("Starting sambamba depth...")
         coverage_output = os.path.abspath(coverage_output)
-        dc_sambamba = {"BAM": infile, "threads": threads, "out": coverage_output}
-        cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0"
-        if diploid :
-            # From sambamba doc: the default is -F 'mapping_quality > 0 and not duplicate and not failed_quality_control'
-            cmd += " -F 'not duplicate and not failed_quality_control'" # allows for multimapping
-        cmd += " {BAM}"
-        cmd = cmd.format(**dc_sambamba)
+        dc_sambamba = {"BAM": infile, "threads": threads, "out": coverage_output, "samtools_path":samtools_path}
+
+        if not diploid :
+            cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
+            cmd = cmd.format(**dc_sambamba)
+        else :
+            cmd = "{samtools_path} depth -aa -q 0 -Q 0 {BAM} > {out}" # not multithreaded
+            cmd = cmd.format(**dc_sambamba)
+
         sambamba_returncode = run(cmd)
         if sambamba_returncode == 1:
-            log(
-                "ERROR: sambamba command returned: {0}, a common problem is a missing index (.bai) file...".format(
-                    sambamba_returncode
+            if not diploid :
+                log(
+                    "ERROR: sambamba depth base command returned: {0}, a common problem is a missing index (.bai) file...".format(
+                        sambamba_returncode
+                    )
                 )
-            )
+            else :
+                log(
+                    "ERROR: samtools depth command returned: {0}...".format(
+                        sambamba_returncode
+                    )
+                )
             sys.exit(1)
     else:
         log(
