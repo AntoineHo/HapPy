@@ -50,7 +50,7 @@ def get_cov_hist(infile, threads: int, outdir, diploid, samtools_path):
         else :
             log("Starting samtools depth (--diploid). Set the --samtools to specify an executable...")
             f = open(dc_sambamba["out"], "w")
-            f.write("REF\tPOS\tCOV")
+            f.write("REF\tPOS\tCOV\n")
             f.close()
             cmd = "{samtools_path} depth -aa -q 0 -Q 0 {BAM} >> {out}" # not multithreaded
             cmd = cmd.format(**dc_sambamba)
