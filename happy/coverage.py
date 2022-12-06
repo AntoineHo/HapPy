@@ -49,7 +49,9 @@ def get_cov_hist(infile, threads: int, outdir, diploid, samtools_path):
             cmd = cmd.format(**dc_sambamba)
         else :
             log("Starting samtools depth (--diploid). Set the --samtools to specify an executable...")
-            cmd = "{samtools_path} depth -aa -q 0 -Q 0 {BAM} > {out}" # not multithreaded
+            cmd = "echo -e 'REF\tPOS\tCOV' > {out}".format(**dc_sambamba)
+            _ = run(cmd) # create a file with header (no header in samtools depth output)
+            cmd = "{samtools_path} depth -aa -q 0 -Q 0 {BAM} >> {out}" # not multithreaded
             cmd = cmd.format(**dc_sambamba)
 
         sambamba_returncode = run(cmd)
