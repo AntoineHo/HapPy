@@ -40,14 +40,15 @@ def get_cov_hist(infile, threads: int, outdir, diploid, samtools_path):
     # Read coverage histogram
     coverage_output = os.path.join(outdir, os.path.basename(infile) + ".cov")
     if not os.path.isfile(coverage_output):  # In case no coverage file found
-        log("Starting sambamba depth...")
         coverage_output = os.path.abspath(coverage_output)
         dc_sambamba = {"BAM": infile, "threads": threads, "out": coverage_output, "samtools_path":samtools_path}
 
         if not diploid :
+            log("Starting sambamba depth...")
             cmd = "sambamba depth base -t {threads} -o {out} --min-coverage=0 --min-base-quality=0 {BAM}"
             cmd = cmd.format(**dc_sambamba)
         else :
+            log("Starting samtools depth (--diploid). Set the --samtools to specify an executable...")
             cmd = "{samtools_path} depth -aa -q 0 -Q 0 {BAM} > {out}" # not multithreaded
             cmd = cmd.format(**dc_sambamba)
 
