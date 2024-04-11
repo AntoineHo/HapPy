@@ -4,8 +4,7 @@
 Easy haploidy estimation.
 
 [![DOI](https://zenodo.org/badge/299235590.svg)](https://zenodo.org/badge/latestdoi/299235590)
-
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/AntoineHo/HapPy/blob/master/LICENSEs)
+[![MIT License](https://img.shields.io/github/license/AntoineHo/HapPy)](https://github.com/AntoineHo/HapPy/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/happy-AntoineHo.svg)](https://badge.fury.io/py/happy-AntoineHo)
 
 ## 1. General
